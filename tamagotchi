@@ -1,0 +1,1 @@
+streamlit run tamagotchi.py --server.headless true
