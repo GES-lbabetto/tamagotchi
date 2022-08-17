@@ -4,12 +4,14 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from heapq import merge
 from io import BytesIO, TextIOWrapper
 from typing import List
 import streamlit as st
+import os, time
 
-st.set_page_config(layout="wide",)
+st.set_page_config(
+    layout="wide",
+)
 
 
 @dataclass
@@ -41,70 +43,137 @@ class BytesStreamManager:
         return self
 
 
-if "FileBuffer" not in st.session_state:
-    st.session_state["FileBuffer"] = []
+if "XYZFileBuffer" not in st.session_state:
+    st.session_state["XYZFileBuffer"] = []
+if "MOL2FileBuffer" not in st.session_state:
+    st.session_state["MOL2FileBuffer"] = []
+if "PBCFileBuffer" not in st.session_state:
+    st.session_state["PBCFileBuffer"] = []
 
-file_buffer: List[BytesStreamManager] = st.session_state["FileBuffer"]
-
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["File Manager", "Energy plot", "Standard Deviation", "Volume/pressure"]
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(
+    [
+        "File Manager",
+        "Energy plot",
+        "Standard Deviation",
+        "Volume/pressure",
+        "RDF",
+        "Linear Density",
+        "Self-diffusivity",
+        "Dielectric Constant",
+    ]
 )
+
+
+def merge_files(selections, filebuffer):
+
+    newbuffer = []
+    merged_files = []
+
+    for id, file in enumerate(st.session_state[filebuffer]):
+        if selections[id]:
+            merged_files.append(file)
+        else:
+            newbuffer.append(file)
+
+    new_file = merged_files.pop(0)
+    while merged_files:
+        new_file += merged_files.pop(0)
+    newbuffer.append(new_file)
+    st.session_state[filebuffer] = newbuffer
+    st.experimental_rerun()
+
+
+def remove_files(selections, filebuffer):
+    newbuffer = []
+    for id, file in enumerate(st.session_state[filebuffer]):
+        if not selections[id]:
+            newbuffer.append(file)
+    st.session_state[filebuffer] = newbuffer
+    st.experimental_rerun()
+
+
+def rename_files(selections, filebuffer, newname):
+    for id, file in enumerate(st.session_state[filebuffer]):
+        if selections[id]:
+            file.name = newname
+    st.experimental_rerun()
+
+
+def show_options(selections, filebuffer):
+    st.write("")
+    st.write("")
+    st.write("")
+    if st.button("Merge files", key=f"{filebuffer}_merge"):
+        merge_files(selections, filebuffer)
+    if st.button("Remove files", key=f"{filebuffer}_remove"):
+        remove_files(selections, filebuffer)
+    newname = st.text_input("Enter new name:", key=f"{filebuffer}_newname")
+    if st.button("Rename", key=f"{filebuffer}_rename"):
+        rename_files(selections, filebuffer, newname)
+
 
 with tab1:
 
     with st.form("File upload form", clear_on_submit=True):
         buffer = st.file_uploader(
-            "Select the files to upload", type="out", accept_multiple_files=True
+            "Select the files to upload",
+            type=["xyz", "mol2", "pbc"],
+            accept_multiple_files=True,
         )
         submitted = st.form_submit_button("Submit")
 
     if submitted and buffer != [] and buffer is not None:
         for file in buffer:
-            file_buffer.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
+            if os.path.splitext(file.name)[1] == ".xyz":
+                st.session_state["XYZFileBuffer"].append(
+                    BytesStreamManager(file.name, BytesIO(file.getvalue()))
+                )
+            elif os.path.splitext(file.name)[1] == ".mol2":
+                st.session_state["MOL2FileBuffer"].append(
+                    BytesStreamManager(file.name, BytesIO(file.getvalue()))
+                )
+            elif os.path.splitext(file.name)[1] == ".pbc":
+                st.session_state["PBCFileBuffer"].append(
+                    BytesStreamManager(file.name, BytesIO(file.getvalue()))
+                )
         st.experimental_rerun()
 
-    st.session_state["FileBuffer"].sort(key=lambda x: x.name)
+    st.session_state["XYZFileBuffer"].sort(key=lambda x: x.name)
+    st.session_state["MOL2FileBuffer"].sort(key=lambda x: x.name)
+    st.session_state["PBCFileBuffer"].sort(key=lambda x: x.name)
 
-    st.markdown("# File list:")
-    selections = []
-    for file in st.session_state["FileBuffer"]:
-        selections.append(st.checkbox(file.name))
+    trajcol1, trajcol2 = st.columns(2)
+    with trajcol1:
+        st.write("### Trajectory files:")
+        traj_selections = []
+        for file in st.session_state["XYZFileBuffer"]:
+            traj_selections.append(st.checkbox(file.name, key=file))
+    with trajcol2:
+        show_options(traj_selections, "XYZFileBuffer")
 
-    st.markdown("---")
+    st.write("---")
 
-    if st.button("Remove files"):
-        newbuffer = []
-        for id, file in enumerate(st.session_state["FileBuffer"]):
-            if not selections[id]:
-                newbuffer.append(file)
-        st.session_state["FileBuffer"] = newbuffer
-        st.experimental_rerun()
+    mol2col1, mol2col2 = st.columns(2)
+    with mol2col1:
+        st.write("### Topology files:")
+        mol_selections = []
+        for file in st.session_state["MOL2FileBuffer"]:
+            mol_selections.append(st.checkbox(file.name, key=file))
+    with mol2col2:
+        show_options(mol_selections, "MOL2FileBuffer")
 
-    if st.button("Merge files"):
-        newbuffer = []
-        merged_files = []
+    st.write("---")
 
-        for id, file in enumerate(st.session_state["FileBuffer"]):
-            if selections[id]:
-                merged_files.append(file)
-            else:
-                newbuffer.append(file)
+    pbccol1, pbccol2 = st.columns(2)
+    with pbccol1:
+        st.write("### PBC files:")
+        pbc_selections = []
+        for file in st.session_state["PBCFileBuffer"]:
+            pbc_selections.append(st.checkbox(file.name, key=file))
+    with pbccol2:
+        show_options(pbc_selections, "PBCFileBuffer")
 
-        new_file = merged_files.pop(0)
-        while merged_files:
-            new_file += merged_files.pop(0)
-        newbuffer.append(new_file)
-        st.session_state["FileBuffer"] = newbuffer
-        st.experimental_rerun()
-
-    newname = st.text_input("Enter new name:")
-    if st.button("Rename"):
-        for id, file in enumerate(st.session_state["FileBuffer"]):
-            if selections[id]:
-                file.name = newname
-        st.experimental_rerun()
-
-    st.markdown("---")
+    st.write("---")
 
 ############################################################################################
 # # # # # # # # # # # # # # # # # #     MD FOLLOWER      # # # # # # # # # # # # # # # # # #
@@ -202,7 +271,7 @@ with tab2:
 
     # local_options = [item for item in Path(".").glob("**/*md.out")]
 
-    for file in st.session_state["FileBuffer"]:
+    for file in st.session_state["XYZFileBuffer"]:
 
         df = read_md(file)
 
@@ -217,7 +286,10 @@ with tab2:
                 x=df.index * timestep,
                 y=df["Total MD Energy"] * 23.06,
                 name="Total MD Energy",
-                line={"width": 0.1, "color": "blue",},
+                line={
+                    "width": 0.1,
+                    "color": "blue",
+                },
             ),
         )
 
@@ -229,7 +301,10 @@ with tab2:
                 .mean()
                 * 23.06,
                 name="Rolling Average on 10 ps",
-                line={"width": 1, "color": "blue",},
+                line={
+                    "width": 1,
+                    "color": "blue",
+                },
             ),
         )
 
@@ -249,7 +324,10 @@ with tab2:
                 x=df.index[::-1] * timestep,
                 y=df["Total MD Energy"].iloc()[::-1].expanding().mean() * 23.06,
                 name="Reverse Expanding Average",
-                line={"width": 3, "color": "orange",},
+                line={
+                    "width": 3,
+                    "color": "orange",
+                },
             ),
         )
         fig.update_xaxes(title_text="time (ps)")
@@ -308,7 +386,11 @@ with tab2:
                 * timestep,
                 y=[average * 23.06] * len(df.index),
                 name=f"Average energy between {start} and {stop} ps",
-                line={"width": 3, "color": "black", "dash": "dash",},
+                line={
+                    "width": 3,
+                    "color": "black",
+                    "dash": "dash",
+                },
             )
         )
         fig.update_xaxes(range=[start, stop])
@@ -343,9 +425,13 @@ with tab2:
 
 with tab3:
 
-    fig2_bins = st.number_input(label="Number of bins:", value=100, key=f"{file}_bins",)
+    fig2_bins = st.number_input(
+        label="Number of bins:",
+        value=100,
+        key=f"{file}_bins",
+    )
 
-    for file in st.session_state["FileBuffer"]:
+    for file in st.session_state["XYZFileBuffer"]:
 
         df = read_md(file)
 
@@ -398,7 +484,9 @@ with tab3:
             secondary_y=False,
         )
         fig.update_yaxes(
-            title_text="Standard deviation (kcal/mol)", range=[0, 1], secondary_y=True,
+            title_text="Standard deviation (kcal/mol)",
+            range=[0, 1],
+            secondary_y=True,
         )
 
         fig2_start, fig2_stop = st.slider(
@@ -428,7 +516,7 @@ with tab3:
 
 with tab4:
 
-    for file in st.session_state["FileBuffer"]:
+    for file in st.session_state["XYZFileBuffer"]:
 
         df = read_md(file)
 
@@ -439,15 +527,52 @@ with tab4:
         fig.update_layout(title=title)
 
         fig.add_trace(
-            go.Scatter(x=df.index * timestep, y=df["Volume"], name="Volume",),
+            go.Scatter(
+                x=df.index * timestep,
+                y=df["Volume"],
+                name="Volume",
+            ),
             secondary_y=False,
         )
 
         fig.add_trace(
-            go.Scatter(x=df.index * timestep, y=df["Pressure"] / 101325, name="Pressure",),
+            go.Scatter(
+                x=df.index * timestep,
+                y=df["Pressure"] / 101325,
+                name="Pressure",
+            ),
             secondary_y=True,
         )
         fig.update_yaxes(title_text="Volume (A^3)", row=2, secondary_y=False)
         fig.update_yaxes(title_text="Pressure (atm)", row=2, secondary_y=True)
         st.plotly_chart(fig, use_container_width=True)
 
+with tab5:
+
+    import MDAnalysis as mda
+    from MDAnalysis import transformations as trans
+    from MDAnalysis.analysis.rdf import InterRDF
+
+    import pandas as pd
+    import numpy as np
+    import streamlit as st
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from pathlib import Path
+
+    def create_u():
+        u = mda.Universe(topo_selection, xyz_selection)
+        with open(pbc_selection, "r") as f:
+            box_side = float(f.read())
+            u.dimensions = [box_side, box_side, box_side, 90, 90, 90]
+        return u
+
+    for file in st.session_state["XYZFileBuffer"]:
+
+        df = read_md(file)
+
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+        title = file.name
+
+        fig.update_layout(title=title)
