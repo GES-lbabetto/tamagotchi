@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from io import BytesIO, TextIOWrapper
+from io import BytesIO, StringIO, TextIOWrapper
 from typing import List
 import streamlit as st
 import os
@@ -46,16 +46,17 @@ class BytesStreamManager:
         return self
 
 
-if "FileBuffer" not in ss:
-    ss.FileBuffer = []
+# Initializing file buffers
+if "OUTs" not in ss:
+    ss.OUTs = []
+if "XYZs" not in ss:
+    ss.XYZs = []
+if "MOL2s" not in ss:
+    ss.MOL2s = []
+if "PBCs" not in ss:
+    ss.PBCs = []
 
-tab1, tab2, tab3 = st.tabs(
-    [
-        "Upload",
-        "Edit",
-        "Setup",
-    ]
-)
+tab1, tab2, tab3 = st.tabs(["Upload", "Edit", "Setup",])
 
 
 def merge_files(selections, filebuffer):
@@ -86,13 +87,6 @@ def remove_files(selections, filebuffer):
     st.experimental_rerun()
 
 
-def rename_files(selections, filebuffer, newname):
-    for id, file in enumerate(ss[filebuffer]):
-        if selections[id]:
-            file.name = newname
-    st.experimental_rerun()
-
-
 with tab1:
 
     with st.form("File upload form", clear_on_submit=True):
@@ -106,43 +100,53 @@ with tab1:
     if submitted and buffer != [] and buffer is not None:
         for file in buffer:
             if os.path.splitext(file.name)[1] == ".out":
-                ss.FileBuffer.append(
-                    BytesStreamManager(file.name, BytesIO(file.getvalue()))
-                )
-            # if os.path.splitext(file.name)[1] == ".xyz":
-            #     ss.XYZFileBuffer.append(
-            #         BytesStreamManager(file.name, BytesIO(file.getvalue()))
-            #     )
-            # elif os.path.splitext(file.name)[1] == ".mol2":
-            #     ss.MOL2FileBuffer.append(
-            #         BytesStreamManager(file.name, BytesIO(file.getvalue()))
-            #     )
-            # elif os.path.splitext(file.name)[1] == ".pbc":
-            #     ss.PBCFileBuffer.append(
-            #         BytesStreamManager(file.name, BytesIO(file.getvalue()))
-            #     )
+                ss.OUTs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
+            if os.path.splitext(file.name)[1] == ".xyz":
+                ss.XYZs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
+            elif os.path.splitext(file.name)[1] == ".mol2":
+                ss.MOL2s.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
+            elif os.path.splitext(file.name)[1] == ".pbc":
+                ss.PBCs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
         st.experimental_rerun()
 
-    ss.FileBuffer.sort(key=lambda x: x.name)
+    ss.OUTs.sort(key=lambda x: x.name)
 
-    if ss.FileBuffer != []:
+    if ss.OUTs != []:
         st.write("**Output files:**")
-        selections = []
-        for file in ss.FileBuffer:
-            selections.append(st.checkbox(file.name, key=file))
+        out_selections = []
+        for file in ss.OUTs:
+            out_selections.append(st.checkbox(file.name, key=file))
         if st.button("Remove output files"):
-            remove_files(selections, "FileBuffer")
+            remove_files(out_selections, "OUTs")
+
+    if ss.XYZs != []:
+        st.write("**Trajectory files:**")
+        xyz_selections = []
+        for file in ss.XYZs:
+            xyz_selections.append(st.checkbox(file.name, key=file))
+        if st.button("Remove trajectory files"):
+            remove_files(xyz_selections, "XYZs")
+
+    if ss.MOL2s != []:
+        st.write("**Topology files:**")
+        mol2_selections = []
+        for file in ss.MOL2s:
+            mol2_selections.append(st.checkbox(file.name, key=file))
+        if st.button("Remove topology files"):
+            remove_files(mol2_selections, "MOL2s")
+
+    if ss.PBCs != []:
+        st.write("**PBC files:**")
+        pbc_selections = []
+        for file in ss.PBCs:
+            pbc_selections.append(st.checkbox(file.name, key=file))
+        if st.button("Remove PBC files"):
+            remove_files(pbc_selections, "PBCs")
 
 with tab2:
 
-    st.write("**Output files:**")
-    selection = st.selectbox(
-        "Select output file", [traj.name for traj in ss.FileBuffer]
-    )
-    st.write("---")
-    out_rename = st.text_input("New output name: ")
-    if st.button("Rename output file"):
-        rename_files(out_rename, "FileBuffer", out_rename)
+    st.write("# TBA")
+
 
 with tab3:
     ss.timestep = float(st.number_input("Timestep (fs): ", value=1.0)) / 1000

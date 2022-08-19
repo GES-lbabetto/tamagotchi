@@ -11,7 +11,7 @@ import streamlit as st
 
 ss = st.session_state
 
-options = [item for item in ss.FileBuffer]
+options = [item for item in ss.OUTs]
 options.sort(key=lambda x: x.name)
 selections = st.sidebar.multiselect(
     "Select output files", options, format_func=lambda x: x.name
@@ -97,13 +97,7 @@ def read_md(md_out):
     return df
 
 
-tab1, tab2, tab3 = st.tabs(
-    [
-        "Energy",
-        "STD",
-        "Volume/Pressure",
-    ]
-)
+tab1, tab2, tab3 = st.tabs(["Energy", "STD", "Volume/Pressure",])
 
 with tab1:
 
@@ -124,10 +118,7 @@ with tab1:
                 x=df.index * ss.timestep,
                 y=df["Total MD Energy"] * 23.06,
                 name="Total MD Energy",
-                line={
-                    "width": 0.1,
-                    "color": "blue",
-                },
+                line={"width": 0.1, "color": "blue",},
             ),
         )
 
@@ -139,10 +130,7 @@ with tab1:
                 .mean()
                 * 23.06,
                 name="Rolling Average on 10 ps",
-                line={
-                    "width": 1,
-                    "color": "blue",
-                },
+                line={"width": 1, "color": "blue",},
             ),
         )
 
@@ -162,10 +150,7 @@ with tab1:
                 x=df.index[::-1] * ss.timestep,
                 y=df["Total MD Energy"].iloc()[::-1].expanding().mean() * 23.06,
                 name="Reverse Expanding Average",
-                line={
-                    "width": 3,
-                    "color": "orange",
-                },
+                line={"width": 3, "color": "orange",},
             ),
         )
         fig.update_xaxes(title_text="time (ps)")
@@ -201,8 +186,6 @@ with tab1:
             stop / ss.timestep / ss.mdrestartfreq - start / ss.timestep / ss.mdrestartfreq
         )
         average_error = dataset_std / np.sqrt((npoints))
-        st.write(f"{average_error:.2}")
-        st.write(f"{len(f'{average_error:.2}')}")
         st.write(
             f"**Average Energy between {start} and {stop} ps:**\n"
             f"* {average:.{len(f'{average_error:.2}')-2}f} ± {average_error:.2} eV\n"
@@ -230,11 +213,7 @@ with tab1:
                 * ss.timestep,
                 y=[average * 23.06] * len(df.index),
                 name=f"Average energy between {start} and {stop} ps",
-                line={
-                    "width": 3,
-                    "color": "black",
-                    "dash": "dash",
-                },
+                line={"width": 3, "color": "black", "dash": "dash",},
             )
         )
         fig.update_xaxes(range=[start, stop])
@@ -269,11 +248,7 @@ with tab1:
 
 with tab2:
 
-    fig2_bins = st.number_input(
-        label="Number of bins:",
-        value=100,
-        key=f"{file}_bins",
-    )
+    fig2_bins = st.number_input(label="Number of bins:", value=100,)
 
     for file in selections:
 
@@ -328,9 +303,7 @@ with tab2:
             secondary_y=False,
         )
         fig.update_yaxes(
-            title_text="Standard deviation (kcal/mol)",
-            range=[0, 1],
-            secondary_y=True,
+            title_text="Standard deviation (kcal/mol)", range=[0, 1], secondary_y=True,
         )
 
         fig2_start, fig2_stop = st.slider(
@@ -371,19 +344,13 @@ with tab3:
         fig.update_layout(title=title)
 
         fig.add_trace(
-            go.Scatter(
-                x=df.index * ss.timestep,
-                y=df["Volume"],
-                name="Volume",
-            ),
+            go.Scatter(x=df.index * ss.timestep, y=df["Volume"], name="Volume",),
             secondary_y=False,
         )
 
         fig.add_trace(
             go.Scatter(
-                x=df.index * ss.timestep,
-                y=df["Pressure"] / 101325,
-                name="Pressure",
+                x=df.index * ss.timestep, y=df["Pressure"] / 101325, name="Pressure",
             ),
             secondary_y=True,
         )
