@@ -206,81 +206,79 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
         MSD = msd.EinsteinMSD(u, select="all", msd_type="xyz", fft=True)
 
         if "MSD" not in st.session_state:
-            st.session_state["MSD"] = None
+            st.session_state["MSD"] = MSD.run()
         if st.button("Calculate MSD"):
             st.session_state["MSD"] = MSD.run()
-            MSD = st.session_state["MSD"]
+        MSD = st.session_state["MSD"]
 
-            msd = MSD.results.timeseries
+        msd = MSD.results.timeseries
 
-            nframes = MSD.n_frames
-            timestep = 100  # this needs to be the actual time between frames
-            st.write(f"Calculating MSD with a timestep of {timestep} fs")
-            lagtimes = np.arange(nframes) * timestep  # make the lag-time axis
+        nframes = MSD.n_frames
+        timestep = 100  # this needs to be the actual time between frames
+        st.write(f"Calculating MSD with a timestep of {timestep} fs")
+        lagtimes = np.arange(nframes) * timestep  # make the lag-time axis
 
-            fig_msd = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_msd = make_subplots(specs=[[{"secondary_y": True}]])
 
-            fig_msd.add_trace(
-                go.Scatter(
-                    x=lagtimes,
-                    y=msd,
-                    name="MSD",
-                ),
-            )
+        fig_msd.add_trace(
+            go.Scatter(
+                x=lagtimes,
+                y=msd,
+                name="MSD",
+            ),
+        )
 
-            # Calculating self-diffusivity
+        # Calculating self-diffusivity
 
-            from scipy.stats import linregress
+        from scipy.stats import linregress
 
-            start_time, end_time = st.slider(
-                label="Select start and end time (ps):",
-                min_value=int(lagtimes[0]),
-                max_value=int(lagtimes[-1]),
-                value=(int(lagtimes[0]), int(lagtimes[-1])),
-            )
-            start_index = int(start_time / timestep)
-            end_index = int(end_time / timestep)
+        start_time, end_time = st.slider(
+            label="Select start and end time (ps):",
+            min_value=int(lagtimes[0]),
+            max_value=int(lagtimes[-1]),
+            value=(int(lagtimes[0]), int(lagtimes[-1])),
+        )
+        start_index = int(start_time / timestep)
+        end_index = int(end_time / timestep)
 
-            fig_msd.add_trace(
-                go.Scatter(
-                    x=np.arange(start_time, end_time),
-                    y=np.arange(start_time, end_time),
-                    name="slope = 1",
-                    line={
-                        "dash": "dash",
-                    },
-                ),
-                secondary_y=True,
-            )
-            fig_msd.update_xaxes(
-                range=[start_time, end_time],
-                title_text="lagtime (fs)",
-                # type="log",
-            )
-            fig_msd.update_yaxes(
-                range=[msd[start_time // timestep], msd[end_time // timestep]],
-                title_text="MSD (Å^2 / fs)",
-                # type="log",
-            )
-            fig_msd.update_yaxes(
-                title_text="",
-                range=[start_time, end_time],
-                secondary_y=True,
-                # type="log",
-            )
+        fig_msd.add_trace(
+            go.Scatter(
+                x=np.arange(start_time, end_time),
+                y=np.arange(start_time, end_time),
+                name="slope = 1",
+                line={
+                    "dash": "dash",
+                },
+            ),
+            secondary_y=True,
+        )
+        fig_msd.update_xaxes(
+            range=[start_time, end_time],
+            title_text="lagtime (fs)",
+            # type="log",
+        )
+        fig_msd.update_yaxes(
+            range=[msd[start_time // timestep], msd[end_time // timestep]],
+            title_text="MSD (Å^2 / fs)",
+            # type="log",
+        )
+        fig_msd.update_yaxes(
+            title_text="",
+            range=[start_time, end_time],
+            secondary_y=True,
+            # type="log",
+        )
 
-            linear_model = linregress(
-                lagtimes[start_index:end_index], msd[start_index:end_index]
-            )
-            slope = linear_model.slope
-            error = linear_model.rvalue
-            # dim_fac is 3 as we computed a 3D msd with 'xyz'
-            D = slope * 1 / (2 * MSD.dim_fac)
-            st.write(
-                f"Self-diffusivity coefficient: {(D*(10**-5)):.3E} m\N{SUPERSCRIPT TWO}/s"
-            )
+        linear_model = linregress(
+            lagtimes[start_index:end_index], msd[start_index:end_index]
+        )
+        slope = linear_model.slope
+        error = linear_model.rvalue
+        # dim_fac is 3 as we computed a 3D msd with 'xyz'
+        D = slope * 1 / (2 * MSD.dim_fac)
+        st.write(f"Self-diffusivity coefficient: {(D*(10**-5)):.3E} m\N{SUPERSCRIPT TWO}/s")
 
-            st.plotly_chart(fig_msd, use_container_width=True)
+        st.plotly_chart(fig_msd, use_container_width=True)
 
     with tab4:
 
