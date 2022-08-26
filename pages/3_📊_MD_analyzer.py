@@ -49,12 +49,12 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             break
         ss.resname = "UNL"
 
+    ss.box_side = float(pbc_file.bytestream.read())
+
     def create_u():
 
         u = mda.Universe(topo_tmp.name, xyz_tmp.name, format="XYZ", topology_format="MOL2")
-
-        box_side = float(pbc_file.bytestream.read())
-        u.dimensions = [box_side, box_side, box_side, 90, 90, 90]
+        u.dimensions = [ss.box_side, ss.box_side, ss.box_side, 90, 90, 90]
 
         return u
 
@@ -86,7 +86,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             u.select_atoms(f"name O"),
             u.select_atoms(f"name O"),
             nbins=500,
-            range=([2.0, 9.0]),
+            range=([2.0, ss.box_side / 2]),
             exclusion_block=(1, 1),
         )
 
@@ -314,11 +314,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
         ]
         u.trajectory.add_transformations(*workflow)
 
-        rdf = InterRDF(
-            solute,
-            solvent,
-            nbins=500,
-        )
+        rdf = InterRDF(solute, solvent, nbins=500, range=[1.0, ss.box_side / 2])
 
         if "rdf_solute_solvent" not in st.session_state:
             st.session_state["rdf_solute_solvent"] = None
