@@ -11,7 +11,7 @@ import streamlit as st
 
 ss = st.session_state
 
-options = [item for item in ss.OUTs]
+options = [out for out in ss.OUTs] + [xyz for xyz in ss.XYZs]
 options.sort(key=lambda x: x.name)
 selections = st.sidebar.multiselect(
     "Select output files", options, format_func=lambda x: x.name
@@ -19,7 +19,7 @@ selections = st.sidebar.multiselect(
 
 
 @st.cache
-def read_md(md_out):
+def read_md_out(md_out):
 
     step = 0
 
@@ -97,7 +97,70 @@ def read_md(md_out):
     return df
 
 
-tab1, tab2, tab3 = st.tabs(["Energy", "STD", "Volume/Pressure",])
+@st.cache
+def read_xyz_traj(xyz_traj):
+
+    step = 0
+
+    steps = []
+    md_steps = []
+    volume = []
+    pressures = []
+    gibbs_free_energies = []
+    gibbs_free_energies_including_ke = []
+
+    potential_energies = []
+    kinetic_energies = []
+    total_md_energies = []
+    temperatures = []
+
+    md_step_point = None
+    volume_point = None
+    pressures_point = None
+    gibbs_free_energy_point = None
+    gibbs_free_energy_including_ke_point = None
+    potential_energies_point = None
+    kinetic_energies_point = None
+    total_md_energy_point = None
+    temperature_point = None
+
+    for line in xyz_traj:
+
+        if "Step" in line:
+            md_step_point = int(line.split()[1])
+            total_md_energy_point = float(line.split()[3]) * 27.2114  # eV
+
+            steps.append(step)
+            step += ss.mdrestartfreq
+
+            md_steps.append(md_step_point)
+            total_md_energies.append(total_md_energy_point)
+
+    df = pd.DataFrame(
+        {
+            # "Volume": volume,
+            # "Pressure": pressures,
+            # "Gibbs Free Energy": gibbs_free_energies,
+            # "Gibbs Free Energies including KE": gibbs_free_energies,
+            # "Potential Energy": potential_energies,
+            # "MD Kinetic Energy": kinetic_energies,
+            "Total MD Energy": total_md_energies,
+            # "MD Temperature": temperatures,
+        },
+        # index=md_steps,
+        index=steps,
+    )
+
+    return df
+
+
+tab1, tab2, tab3 = st.tabs(
+    [
+        "Energy",
+        "STD",
+        "Volume/Pressure",
+    ]
+)
 
 with tab1:
 
@@ -105,7 +168,10 @@ with tab1:
 
     for file in selections:
 
-        df = read_md(file)
+        if file.name[-4:] == ".out":
+            df = read_md_out(file)
+        elif file.name[-4:] == ".xyz":
+            df = read_xyz_traj(file)
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -118,7 +184,10 @@ with tab1:
                 x=df.index * ss.timestep,
                 y=df["Total MD Energy"] * 23.06,
                 name="Total MD Energy",
-                line={"width": 0.1, "color": "blue",},
+                line={
+                    "width": 0.1,
+                    "color": "blue",
+                },
             ),
         )
 
@@ -130,7 +199,10 @@ with tab1:
                 .mean()
                 * 23.06,
                 name="Rolling Average on 10 ps",
-                line={"width": 1, "color": "blue",},
+                line={
+                    "width": 1,
+                    "color": "blue",
+                },
             ),
         )
 
@@ -150,7 +222,10 @@ with tab1:
                 x=df.index[::-1] * ss.timestep,
                 y=df["Total MD Energy"].iloc()[::-1].expanding().mean() * 23.06,
                 name="Reverse Expanding Average",
-                line={"width": 3, "color": "orange",},
+                line={
+                    "width": 3,
+                    "color": "orange",
+                },
             ),
         )
         fig.update_xaxes(title_text="time (ps)")
@@ -213,7 +288,11 @@ with tab1:
                 * ss.timestep,
                 y=[average * 23.06] * len(df.index),
                 name=f"Average energy between {start} and {stop} ps",
-                line={"width": 3, "color": "black", "dash": "dash",},
+                line={
+                    "width": 3,
+                    "color": "black",
+                    "dash": "dash",
+                },
             )
         )
         fig.update_xaxes(range=[start, stop])
@@ -248,11 +327,17 @@ with tab1:
 
 with tab2:
 
-    fig2_bins = st.number_input(label="Number of bins:", value=100,)
+    fig2_bins = st.number_input(
+        label="Number of bins:",
+        value=100,
+    )
 
     for file in selections:
 
-        df = read_md(file)
+        if file.name[-4:] == ".out":
+            df = read_md_out(file)
+        elif file.name[-4:] == ".xyz":
+            df = read_xyz_traj(file)
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -303,7 +388,9 @@ with tab2:
             secondary_y=False,
         )
         fig.update_yaxes(
-            title_text="Standard deviation (kcal/mol)", range=[0, 1], secondary_y=True,
+            title_text="Standard deviation (kcal/mol)",
+            range=[0, 1],
+            secondary_y=True,
         )
 
         fig2_start, fig2_stop = st.slider(
@@ -335,7 +422,10 @@ with tab3:
 
     for file in selections:
 
-        df = read_md(file)
+        if file.name[-4:] == ".out":
+            df = read_md_out(file)
+        elif file.name[-4:] == ".xyz":
+            continue
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -344,13 +434,19 @@ with tab3:
         fig.update_layout(title=title)
 
         fig.add_trace(
-            go.Scatter(x=df.index * ss.timestep, y=df["Volume"], name="Volume",),
+            go.Scatter(
+                x=df.index * ss.timestep,
+                y=df["Volume"],
+                name="Volume",
+            ),
             secondary_y=False,
         )
 
         fig.add_trace(
             go.Scatter(
-                x=df.index * ss.timestep, y=df["Pressure"] / 101325, name="Pressure",
+                x=df.index * ss.timestep,
+                y=df["Pressure"] / 101325,
+                name="Pressure",
             ),
             secondary_y=True,
         )
