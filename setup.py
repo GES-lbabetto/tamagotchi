@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="tamagotchi",
-    version="0.1.0",
+    version="0.1.1",
     description="",
     long_description="",
     packages=["tamagotchi"],
