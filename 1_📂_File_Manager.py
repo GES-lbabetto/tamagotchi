@@ -56,7 +56,13 @@ if "MOL2s" not in ss:
 if "PBCs" not in ss:
     ss.PBCs = []
 
-tab1, tab2, tab3 = st.tabs(["Upload", "Edit", "Setup",])
+tab1, tab2, tab3 = st.tabs(
+    [
+        "Upload",
+        "Edit",
+        "Setup",
+    ]
+)
 
 
 def merge_files(selections, filebuffer):
@@ -83,6 +89,19 @@ def remove_files(selections, filebuffer):
     for id, file in enumerate(ss[filebuffer]):
         if not selections[id]:
             newbuffer.append(file)
+    ss[filebuffer] = newbuffer
+    st.experimental_rerun()
+
+
+def rename_file(selections, newname, filebuffer):
+    newbuffer = []
+    if selections.count(True) > 1:
+        st.error("ERROR: cannot rename more than 1 file at the same time!")
+        return
+    for id, file in enumerate(ss[filebuffer]):
+        if selections[id]:
+            file.name = f"{newname}.xyz"
+        newbuffer.append(file)
     ss[filebuffer] = newbuffer
     st.experimental_rerun()
 
@@ -115,37 +134,92 @@ with tab1:
         st.write("**Output files:**")
         out_selections = []
         for file in ss.OUTs:
-            out_selections.append(st.checkbox(file.name, key=file))
-        if st.button("Remove output files"):
-            remove_files(out_selections, "OUTs")
+            st.write(f"* {file.name}")
 
     if ss.XYZs != []:
         st.write("**Trajectory files:**")
         xyz_selections = []
         for file in ss.XYZs:
-            xyz_selections.append(st.checkbox(file.name, key=file))
-        if st.button("Remove trajectory files"):
-            remove_files(xyz_selections, "XYZs")
+            st.write(f"* {file.name}")
 
     if ss.MOL2s != []:
         st.write("**Topology files:**")
         mol2_selections = []
         for file in ss.MOL2s:
-            mol2_selections.append(st.checkbox(file.name, key=file))
-        if st.button("Remove topology files"):
-            remove_files(mol2_selections, "MOL2s")
+            st.write(f"* {file.name}")
 
     if ss.PBCs != []:
         st.write("**PBC files:**")
         pbc_selections = []
         for file in ss.PBCs:
-            pbc_selections.append(st.checkbox(file.name, key=file))
-        if st.button("Remove PBC files"):
-            remove_files(pbc_selections, "PBCs")
+            st.write(f"* {file.name}")
+
 
 with tab2:
 
-    st.write("# TBA")
+    if ss.OUTs != []:
+        st.write("**Output files:**")
+        outcol1, outcol2, outcol3 = st.columns([1, 1, 3])
+        with outcol1:
+            out_selections = []
+            for file in ss.OUTs:
+                out_selections.append(st.checkbox(file.name[:-4], key=file))
+        with outcol2:
+            if st.button("Remove output files"):
+                remove_files(out_selections, "OUTs")
+            if st.button("Merge output files"):
+                merge_files(out_selections, "OUTs")
+            newname = st.text_input("New name for selected OUT file:")
+            if st.button("Rename output file"):
+                rename_file(out_selections, newname, "OUTs")
+
+    if ss.XYZs != []:
+        st.write("**Trajectory files:**")
+        xyzcol1, xyzcol2, xyzcol3 = st.columns([1, 1, 3])
+        with xyzcol1:
+            xyz_selections = []
+            for file in ss.XYZs:
+                xyz_selections.append(st.checkbox(file.name[:-4], key=file))
+        with xyzcol2:
+            if st.button("Remove trajectory files"):
+                remove_files(xyz_selections, "XYZs")
+            if st.button("Merge trajectory files"):
+                merge_files(xyz_selections, "XYZs")
+            newname = st.text_input("New name for selected XYZ file:")
+            if st.button("Rename trajectory file"):
+                rename_file(xyz_selections, newname, "XYZs")
+
+    if ss.MOL2s != []:
+        st.write("**Topology files:**")
+        mol2col1, mol2col2, mol2col3 = st.columns([1, 1, 3])
+        with mol2col1:
+            mol2_selections = []
+            for file in ss.MOL2s:
+                mol2_selections.append(st.checkbox(file.name[:-4], key=file))
+        with mol2col2:
+            if st.button("Remove topology files"):
+                remove_files(mol2_selections, "MOL2s")
+            if st.button("Merge topology files"):
+                merge_files(mol2_selections, "MOL2s")
+            newname = st.text_input("New name for selected MOL2 file:")
+            if st.button("Rename topology file"):
+                rename_file(mol2_selections, newname, "MOL2s")
+
+    if ss.PBCs != []:
+        st.write("**Trajectory files:**")
+        pbccol1, pbccol2, pbccol3 = st.columns([1, 1, 3])
+        with pbccol1:
+            pbc_selections = []
+            for file in ss.PBCs:
+                pbc_selections.append(st.checkbox(file.name[:-4], key=file))
+        with pbccol2:
+            if st.button("Remove trajectory files"):
+                remove_files(pbc_selections, "PBCs")
+            if st.button("Merge trajectory files"):
+                merge_files(pbc_selections, "PBCs")
+            newname = st.text_input("New name for selected PBC file:")
+            if st.button("Rename trajectory file"):
+                rename_file(pbc_selections, newname, "PBCs")
 
 
 with tab3:
