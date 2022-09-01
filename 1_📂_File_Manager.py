@@ -100,7 +100,7 @@ def rename_file(selections, newname, filebuffer):
         return
     for id, file in enumerate(ss[filebuffer]):
         if selections[id]:
-            file.name = f"{newname}.xyz"
+            file.name = newname
         newbuffer.append(file)
     ss[filebuffer] = newbuffer
     st.experimental_rerun()
@@ -163,7 +163,7 @@ with tab2:
         with outcol1:
             out_selections = []
             for file in ss.OUTs:
-                out_selections.append(st.checkbox(file.name[:-4], key=file))
+                out_selections.append(st.checkbox(file.name, key=file))
         with outcol2:
             if st.button("Remove output files"):
                 remove_files(out_selections, "OUTs")
@@ -180,7 +180,7 @@ with tab2:
         with xyzcol1:
             xyz_selections = []
             for file in ss.XYZs:
-                xyz_selections.append(st.checkbox(file.name[:-4], key=file))
+                xyz_selections.append(st.checkbox(file.name, key=file))
         with xyzcol2:
             if st.button("Remove trajectory files"):
                 remove_files(xyz_selections, "XYZs")
@@ -197,7 +197,7 @@ with tab2:
         with mol2col1:
             mol2_selections = []
             for file in ss.MOL2s:
-                mol2_selections.append(st.checkbox(file.name[:-4], key=file))
+                mol2_selections.append(st.checkbox(file.name, key=file))
         with mol2col2:
             if st.button("Remove topology files"):
                 remove_files(mol2_selections, "MOL2s")
@@ -214,7 +214,7 @@ with tab2:
         with pbccol1:
             pbc_selections = []
             for file in ss.PBCs:
-                pbc_selections.append(st.checkbox(file.name[:-4], key=file))
+                pbc_selections.append(st.checkbox(file.name, key=file))
         with pbccol2:
             if st.button("Remove PBC files"):
                 remove_files(pbc_selections, "PBCs")
