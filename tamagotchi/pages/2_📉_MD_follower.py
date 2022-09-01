@@ -2,6 +2,7 @@
 # # # # # # # # # # # # # # # # # #     MD FOLLOWER      # # # # # # # # # # # # # # # # # #
 ############################################################################################
 
+from functools import total_ordering
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -11,10 +12,23 @@ import streamlit as st
 
 ss = st.session_state
 
+
 options = [out for out in ss.OUTs] + [xyz for xyz in ss.XYZs]
 options.sort(key=lambda x: x.name)
 selections = st.sidebar.multiselect(
     "Select output files", options, format_func=lambda x: x.name
+)
+
+topo_options = [item for item in ss.MOL2s]
+topo_options.sort(key=lambda x: x.name)
+topo_file = st.sidebar.selectbox(
+    "Select topology file", topo_options, format_func=lambda x: x.name
+)
+
+pbc_options = [item for item in ss.PBCs]
+pbc_options.sort(key=lambda x: x.name)
+pbc_file = st.sidebar.selectbox(
+    "Select pbc file", pbc_options, format_func=lambda x: x.name
 )
 
 
@@ -158,13 +172,11 @@ tab1, tab2, tab3 = st.tabs(
     [
         "Energy",
         "STD",
-        "Volume/Pressure",
+        "Density",
     ]
 )
 
 with tab1:
-
-    # local_options = [item for item in Path(".").glob("**/*md.out")]
 
     for file in selections:
 
@@ -206,17 +218,6 @@ with tab1:
             ),
         )
 
-        # fig.add_trace(
-        #    go.Scatter(
-        #        x=df.index*ss.timestep,
-        #        y=df["Total MD Energy"].expanding().mean()*23.06,
-        #        name="Expanding Average",
-        #        line={
-        #            "width": 3,
-        #            "color": "turquoise",
-        #            },
-        #    ),
-        # )
         fig.add_trace(
             go.Scatter(
                 x=df.index[::-1] * ss.timestep,
@@ -267,17 +268,6 @@ with tab1:
             f"* {average*23.06:.{len(f'{average_error*23.06:.2}')-2}f} ± {average_error*23.06:.2} kcal/mol"
         )
 
-        # fig.add_trace(
-        #    go.Scatter(
-        #        x=df.index[int(start/ss.timestep/ss.mdrestartfreq):int(stop/ss.timestep/ss.mdrestartfreq)]*ss.timestep,
-        #        y=df["Total MD Energy"].iloc()[int(start/ss.timestep/ss.mdrestartfreq):int(stop/ss.timestep/ss.mdrestartfreq):].expanding().mean()*23.06,
-        #        name=f"Expanding Average between {start} and {stop} ps",
-        #        line={
-        #            "width": 3,
-        #            "color": "purple",
-        #            },
-        #    ),
-        # )
         fig.add_trace(
             go.Scatter(
                 x=df.index[
@@ -420,12 +410,77 @@ with tab2:
 
 with tab3:
 
+    amu = 1.66054e-24
+    atom_weights = {
+        "H": 1.008,
+        "Li": 6.94,
+        "Be": 9.012,
+        "B": 10.81,
+        "C": 12.011,
+        "N": 14.007,
+        "O": 15.999,
+        "F": 18.998,
+        "Na": 22.989,
+        "Mg": 24.305,
+        "Al": 26.981,
+        "Si": 28.085,
+        "P": 30.973,
+        "S": 32.06,
+        "Cl": 35.45,
+        "K": 39.0983,
+        "Ca": 40.078,
+        "Sc": 44.955,
+        "Ti": 47.867,
+        "V": 50.9415,
+        "Cr": 51.9961,
+        "Mn": 54.938,
+        "Fe": 55.845,
+        "Co": 58.933,
+        "Ni": 58.6934,
+        "Cu": 63.546,
+        "Zn": 65.38,
+        "Ga": 69.723,
+        "Ge": 72.630,
+        "As": 74.921,
+        "Se": 78.971,
+        "Br": 79.904,
+        "Pd": 106.42,
+        "Ag": 107.8682,
+        "Cd": 112.414,
+        "Sn": 118.710,
+        "I": 126.904,
+        "Pt": 195.084,
+        "Au": 196.966,
+        "Hg": 200.592,
+    }
+
     for file in selections:
 
         if file.name[-4:] == ".out":
             df = read_md_out(file)
         elif file.name[-4:] == ".xyz":
             continue
+
+        total_weight = 0.0
+        for line in topo_file:
+            if len(line.split()) == 9:
+                total_weight += float(atom_weights[line.split()[1]])
+        total_weight *= amu  # g
+
+        dens_ps = st.slider(
+            label="Calculate density at (ps):",
+            min_value=int(df.index[0] * ss.timestep),
+            max_value=int(df.index[-1] * ss.timestep),
+            value=int(int(df.index[-1] * ss.timestep)),
+            key=f"{file.name}_dens",
+        )
+
+        sel_dens = (
+            total_weight
+            / df["Volume"].iloc()[int(dens_ps / ss.timestep / ss.mdrestartfreq)]
+            / 1e-27
+        )
+        st.write(f"Density after {dens_ps:.0f} ps: **{sel_dens:.2f}** g/L\n")
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -436,8 +491,8 @@ with tab3:
         fig.add_trace(
             go.Scatter(
                 x=df.index * ss.timestep,
-                y=df["Volume"],
-                name="Volume",
+                y=total_weight / (df["Volume"] * 1e-27),
+                name="Density",
             ),
             secondary_y=False,
         )
@@ -450,6 +505,7 @@ with tab3:
             ),
             secondary_y=True,
         )
-        fig.update_yaxes(title_text="Volume (A^3)", row=2, secondary_y=False)
-        fig.update_yaxes(title_text="Pressure (atm)", row=2, secondary_y=True)
+        fig.update_xaxes(title_text="time (ps)")
+        fig.update_yaxes(title_text="Density (g/L)", secondary_y=False)
+        fig.update_yaxes(title_text="Pressure (atm)", secondary_y=True)
         st.plotly_chart(fig, use_container_width=True)
