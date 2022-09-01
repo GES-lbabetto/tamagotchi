@@ -213,12 +213,12 @@ with tab2:
             for file in ss.PBCs:
                 pbc_selections.append(st.checkbox(file.name[:-4], key=file))
         with pbccol2:
-            if st.button("Remove trajectory files"):
+            if st.button("Remove PBC files"):
                 remove_files(pbc_selections, "PBCs")
-            if st.button("Merge trajectory files"):
+            if st.button("Merge PBC files"):
                 merge_files(pbc_selections, "PBCs")
             newname = st.text_input("New name for selected PBC file:")
-            if st.button("Rename trajectory file"):
+            if st.button("Rename PBC file"):
                 rename_file(pbc_selections, newname, "PBCs")
 
 
