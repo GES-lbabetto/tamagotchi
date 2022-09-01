@@ -1,0 +1,48 @@
+{% set name = "tamagotchi" %}
+{% set version = "0.1.0" %}
+
+
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+
+
+source:
+  url: https://github.com/GES-compchem/{{ name }}/archive/refs/tags/{{ version }}.zip
+
+build:
+  noarch: python
+  number: 0
+
+
+
+requirements:
+  host:
+    - python>=3.8
+    - pip
+    - setuptools
+    - streamlit
+    - mdanalysis
+
+  run:
+    - python>=3.8
+    - streamlit
+    - mdanalysis
+
+
+about:
+  home: The package home page
+  license: UNKNOWN
+  license_family: OTHER
+  license_file:
+  summary: ""
+  doc_url:
+  dev_url:
+
+
+
+extra:
+  recipe-maintainers:
+    - GES-compchem
