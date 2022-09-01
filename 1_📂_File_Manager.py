@@ -159,7 +159,7 @@ with tab2:
 
     if ss.OUTs != []:
         st.write("**Output files:**")
-        outcol1, outcol2, outcol3 = st.columns([1, 1, 3])
+        outcol1, outcol2, outcol3 = st.columns([1, 1, 2])
         with outcol1:
             out_selections = []
             for file in ss.OUTs:
@@ -172,10 +172,11 @@ with tab2:
             newname = st.text_input("New name for selected OUT file:")
             if st.button("Rename output file"):
                 rename_file(out_selections, newname, "OUTs")
+        st.write("---")
 
     if ss.XYZs != []:
         st.write("**Trajectory files:**")
-        xyzcol1, xyzcol2, xyzcol3 = st.columns([1, 1, 3])
+        xyzcol1, xyzcol2, xyzcol3 = st.columns([1, 1, 2])
         with xyzcol1:
             xyz_selections = []
             for file in ss.XYZs:
@@ -188,10 +189,11 @@ with tab2:
             newname = st.text_input("New name for selected XYZ file:")
             if st.button("Rename trajectory file"):
                 rename_file(xyz_selections, newname, "XYZs")
+        st.write("---")
 
     if ss.MOL2s != []:
         st.write("**Topology files:**")
-        mol2col1, mol2col2, mol2col3 = st.columns([1, 1, 3])
+        mol2col1, mol2col2, mol2col3 = st.columns([1, 1, 2])
         with mol2col1:
             mol2_selections = []
             for file in ss.MOL2s:
@@ -204,10 +206,11 @@ with tab2:
             newname = st.text_input("New name for selected MOL2 file:")
             if st.button("Rename topology file"):
                 rename_file(mol2_selections, newname, "MOL2s")
+        st.write("---")
 
     if ss.PBCs != []:
         st.write("**Trajectory files:**")
-        pbccol1, pbccol2, pbccol3 = st.columns([1, 1, 3])
+        pbccol1, pbccol2, pbccol3 = st.columns([1, 1, 2])
         with pbccol1:
             pbc_selections = []
             for file in ss.PBCs:
@@ -220,6 +223,7 @@ with tab2:
             newname = st.text_input("New name for selected PBC file:")
             if st.button("Rename PBC file"):
                 rename_file(pbc_selections, newname, "PBCs")
+        st.write("---")
 
 
 with tab3:
