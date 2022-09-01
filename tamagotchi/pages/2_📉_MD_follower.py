@@ -491,21 +491,27 @@ with tab3:
         fig.add_trace(
             go.Scatter(
                 x=df.index * ss.timestep,
-                y=total_weight / (df["Volume"] * 1e-27),
-                name="Density",
+                y=df["Pressure"] / 101325,
+                name="Pressure",
+                line={
+                    "width": 0.5,
+                },
             ),
             secondary_y=False,
         )
-
         fig.add_trace(
             go.Scatter(
                 x=df.index * ss.timestep,
-                y=df["Pressure"] / 101325,
-                name="Pressure",
+                y=total_weight / (df["Volume"] * 1e-27),
+                name="Density",
+                line={
+                    "width": 3,
+                },
             ),
             secondary_y=True,
         )
+
         fig.update_xaxes(title_text="time (ps)")
-        fig.update_yaxes(title_text="Density (g/L)", secondary_y=False)
-        fig.update_yaxes(title_text="Pressure (atm)", secondary_y=True)
+        fig.update_yaxes(title_text="Pressure (atm)", secondary_y=False)
+        fig.update_yaxes(title_text="Density (g/L)", secondary_y=True)
         st.plotly_chart(fig, use_container_width=True)
