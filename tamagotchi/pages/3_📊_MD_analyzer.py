@@ -100,8 +100,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
             import os
 
-            exp_path = f"{os.path.dirname(os.path.dirname(st.__file__))}/tamagotchi/data/RDF_OO_exp.csv"
-            exp_path = "/mnt/c/Users/LucaBabetto/GitHub/tamagotchi/data/RDF_OO_exp.csv"
+            exp_path = f"{os.path.dirname(__file__)}/../data/RDF_OO_exp.csv"
 
             exp = pd.read_csv(exp_path)
 
