@@ -60,7 +60,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
-            "O-O RDF",
+            "Atom-Atom RDF",
             "Linear Density",
             "Self-Diffusivity",
             "Dielectric Constant",
@@ -70,7 +70,11 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
     with tab1:
 
-        # O-O Radial Distribution Function (RDF)
+        # Atom-Atom Radial Distribution Function (RDF)
+
+        atom1 = st.sidebar.text_input("Select atom type 1: ", value="O")
+        atom2 = st.sidebar.text_input("Select atom type 2: ", value="O")
+        show_water = st.sidebar.checkbox("Show water O-O RDF")
 
         u = create_u()
 
@@ -83,39 +87,40 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
         u.trajectory.add_transformations(*workflow)
 
         rdf = InterRDF(
-            u.select_atoms(f"name O"),
-            u.select_atoms(f"name O"),
+            u.select_atoms(f"name {atom1}"),
+            u.select_atoms(f"name {atom2}"),
             nbins=500,
             range=([2.0, ss.box_side / 2]),
             exclusion_block=(1, 1),
         )
 
-        if "rdf_OO" not in st.session_state:
-            st.session_state["rdf_OO"] = None
-        if st.button("Calculate O-O RDF"):
-            st.session_state["rdf_OO"] = rdf.run(step=1)
-            rdf_OO = st.session_state["rdf_OO"]
+        if "rdf_atom" not in st.session_state:
+            st.session_state["rdf_atom"] = None
+        if st.button("Calculate {atom1}-{atom2} RDF"):
+            st.session_state["rdf_atom"] = rdf.run(step=1)
+            rdf_atom = st.session_state["rdf_atom"]
 
             fig_rdf = go.Figure()
 
             import os
 
-            exp_path = f"{os.path.dirname(__file__)}/../data/RDF_OO_exp.csv"
+            exp_path = f"{os.path.dirname(__file__)}/../data/rdf_atom_exp.csv"
 
             exp = pd.read_csv(exp_path)
 
-            fig_rdf.add_trace(
-                go.Scatter(
-                    x=exp["r (Å)"],
-                    y=exp["g_OO"],
-                    name="Experimental",
-                ),
-            )
+            if show_water:
+                fig_rdf.add_trace(
+                    go.Scatter(
+                        x=exp["r (Å)"],
+                        y=exp["g_OO"],
+                        name="Experimental",
+                    ),
+                )
 
             fig_rdf.add_trace(
                 go.Scatter(
-                    x=rdf_OO.results.bins,
-                    y=rdf_OO.results.rdf,
+                    x=rdf_atom.results.bins,
+                    y=rdf_atom.results.rdf,
                     name="Calculated",
                 ),
             )
