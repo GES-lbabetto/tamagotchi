@@ -90,7 +90,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             u.select_atoms(f"name {atom1}"),
             u.select_atoms(f"name {atom2}"),
             nbins=500,
-            range=([2.0, ss.box_side / 2]),
+            range=([0.0, ss.box_side / 2]),
             exclusion_block=(1, 1),
         )
 
