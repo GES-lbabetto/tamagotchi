@@ -116,6 +116,36 @@ with tab1:
         )
         submitted = st.form_submit_button("Submit")
 
+    import glob
+
+    local_files = []
+    local_files += glob.glob("/scratch/lbabetto/**/*md.out", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*geo_end.xyz", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*.mol2", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*.pbc", recursive=True)
+
+    for file in local_files:
+        if os.path.splitext(file)[1] == ".out" and file not in [
+            file.name for file in ss.OUTs
+        ]:
+            with open(file, "rb") as f:
+                ss.OUTs.append(BytesStreamManager(file, BytesIO(f.read())))
+        if os.path.splitext(file)[1] == ".xyz" and file not in [
+            file.name for file in ss.XYZs
+        ]:
+            with open(file, "rb") as f:
+                ss.XYZs.append(BytesStreamManager(file, BytesIO(f.read())))
+        if os.path.splitext(file)[1] == ".mol2" and file not in [
+            file.name for file in ss.MOL2s
+        ]:
+            with open(file, "rb") as f:
+                ss.MOL2s.append(BytesStreamManager(file, BytesIO(f.read())))
+        if os.path.splitext(file)[1] == ".pbc" and file not in [
+            file.name for file in ss.PBCs
+        ]:
+            with open(file, "rb") as f:
+                ss.PBCs.append(BytesStreamManager(file, BytesIO(f.read())))
+
     if submitted and buffer != [] and buffer is not None:
         for file in buffer:
             if os.path.splitext(file.name)[1] == ".out":
