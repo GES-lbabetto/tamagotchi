@@ -78,11 +78,11 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         u = create_u()
 
-        water = u.select_atoms(f"not resname {ss.resname}")
+        solvent = u.select_atoms(f"not resname {ss.resname}")
 
         workflow = [
             trans.unwrap(u.atoms),
-            trans.wrap(water, compound="residues"),
+            trans.wrap(solvent, compound="residues"),
         ]
         u.trajectory.add_transformations(*workflow)
 
