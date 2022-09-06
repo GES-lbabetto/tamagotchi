@@ -82,7 +82,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         workflow = [
             trans.unwrap(u.atoms),
-            trans.wrap(solvent, compound="residues"),
+            trans.wrap(u.atoms, compound="residues"),
         ]
         u.trajectory.add_transformations(*workflow)
 
@@ -312,7 +312,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         workflow = [
             trans.unwrap(u.atoms),
-            trans.wrap(water, compound="residues"),
+            trans.wrap(u.atoms, compound="residues"),
         ]
         u.trajectory.add_transformations(*workflow)
 
