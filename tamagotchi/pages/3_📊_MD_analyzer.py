@@ -131,7 +131,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             ss.fig_rdf.update_xaxes(title_text="r (Å)")
             ss.fig_rdf.update_yaxes(title_text="g(r) O-O")
 
-            st.plotly_chart(ss.fig_rdf, use_container_width=True)
+        st.plotly_chart(ss.fig_rdf, use_container_width=True)
 
     with tab2:
 
@@ -341,4 +341,4 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             ss.fig_solvrdf.update_xaxes(title_text="r (Å)")
             ss.fig_solvrdf.update_yaxes(title_text="g(r)")
 
-            st.plotly_chart(ss.fig_solvrdf, use_container_width=True)
+        st.plotly_chart(ss.fig_solvrdf, use_container_width=True)
