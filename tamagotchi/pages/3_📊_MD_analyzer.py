@@ -76,9 +76,9 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         with tab1_col1:
 
+            show_water = st.checkbox("Show water O-O RDF")
             atom1 = st.text_input("Select atom type 1: ", value="O")
             atom2 = st.text_input("Select atom type 2: ", value="O")
-            show_water = st.checkbox("Show water O-O RDF")
 
         u = create_u()
 
