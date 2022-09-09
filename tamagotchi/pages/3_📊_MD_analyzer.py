@@ -74,7 +74,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         atom1 = st.sidebar.text_input("Select atom type 1: ", value="O")
         atom2 = st.sidebar.text_input("Select atom type 2: ", value="O")
-        show_water = st.sidebar.checkbox("Show water O-O RDF")
+        show_water = st.checkbox("Show water O-O RDF")
 
         u = create_u()
 
@@ -94,13 +94,16 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             exclusion_block=(1, 1),
         )
 
-        if "rdf_atom" not in st.session_state:
-            st.session_state["rdf_atom"] = None
-        if st.button("Calculate {atom1}-{atom2} RDF"):
-            st.session_state["rdf_atom"] = rdf.run(step=1)
-            rdf_atom = st.session_state["rdf_atom"]
+        if "fig_rdf" not in ss or st.button("Clear RDF plot"):
+            ss.fig_rdf = go.Figure()
 
-            fig_rdf = go.Figure()
+        if "rdf_atom" not in ss:
+            ss["rdf_atom"] = None
+        if st.button("Calculate {atom1}-{atom2} RDF"):
+            ss["rdf_atom"] = rdf.run(step=1)
+            rdf_atom = ss["rdf_atom"]
+
+            ss.fig_rdf = go.Figure()
 
             import os
 
@@ -109,7 +112,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             exp = pd.read_csv(exp_path)
 
             if show_water:
-                fig_rdf.add_trace(
+                ss.fig_rdf.add_trace(
                     go.Scatter(
                         x=exp["r (Å)"],
                         y=exp["g_OO"],
@@ -117,7 +120,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     ),
                 )
 
-            fig_rdf.add_trace(
+            ss.fig_rdf.add_trace(
                 go.Scatter(
                     x=rdf_atom.results.bins,
                     y=rdf_atom.results.rdf,
@@ -125,10 +128,10 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                 ),
             )
 
-            fig_rdf.update_xaxes(title_text="r (Å)")
-            fig_rdf.update_yaxes(title_text="g(r) O-O")
+            ss.fig_rdf.update_xaxes(title_text="r (Å)")
+            ss.fig_rdf.update_yaxes(title_text="g(r) O-O")
 
-            st.plotly_chart(fig_rdf, use_container_width=True)
+            st.plotly_chart(ss.fig_rdf, use_container_width=True)
 
     with tab2:
 
@@ -140,11 +143,11 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         ldens = LinearDensity(u.atoms, binsize=0.1)
 
-        if "ldens" not in st.session_state:
-            st.session_state["ldens"] = None
+        if "ldens" not in ss:
+            ss["ldens"] = None
         if st.button("Calculate Linear Density"):
-            st.session_state["ldens"] = ldens.run()
-            ldens = st.session_state["ldens"]
+            ss["ldens"] = ldens.run()
+            ldens = ss["ldens"]
 
             fig_ldens = go.Figure()
             average = (
@@ -209,11 +212,11 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         MSD = msd.EinsteinMSD(u, select="all", msd_type="xyz", fft=True)
 
-        if "MSD" not in st.session_state:
-            st.session_state["MSD"] = MSD.run()
+        if "MSD" not in ss:
+            ss["MSD"] = MSD.run()
         if st.button("Calculate MSD"):
-            st.session_state["MSD"] = MSD.run()
-        MSD = st.session_state["MSD"]
+            ss["MSD"] = MSD.run()
+        MSD = ss["MSD"]
 
         msd = MSD.results.timeseries
 
@@ -294,11 +297,11 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         diel = DielectricConstant(u.atoms, temperature=298.15, make_whole=True)
 
-        if "diel" not in st.session_state:
-            st.session_state["diel"] = None
+        if "diel" not in ss:
+            ss["diel"] = None
         if st.button("Calculate Dielectric Constant"):
-            st.session_state["diel"] = diel.run()
-            diel = st.session_state["diel"]
+            ss["diel"] = diel.run()
+            diel = ss["diel"]
             st.write(f"Dielectric constant: {diel.results.eps_mean:.3}")
 
     with tab5:
@@ -318,15 +321,16 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         rdf = InterRDF(solute, solvent, nbins=500, range=[1.0, ss.box_side / 2])
 
-        if "rdf_solute_solvent" not in st.session_state:
-            st.session_state["rdf_solute_solvent"] = None
+        if "fig_solvrdf" not in ss or st.button("Clear Solute-solvent RDF plot"):
+            ss.fig_solvrdf = go.Figure()
+
+        if "rdf_solute_solvent" not in ss:
+            ss["rdf_solute_solvent"] = None
         if st.button("Calculate solute-solvent RDF"):
-            st.session_state["rdf_solute_solvent"] = rdf.run(step=1)
-            rdf_solute_solvent = st.session_state["rdf_solute_solvent"]
+            ss["rdf_solute_solvent"] = rdf.run(step=1)
+            rdf_solute_solvent = ss["rdf_solute_solvent"]
 
-            fig_rdf = go.Figure()
-
-            fig_rdf.add_trace(
+            ss.fig_solvrdf.add_trace(
                 go.Scatter(
                     x=rdf_solute_solvent.results.bins,
                     y=rdf_solute_solvent.results.rdf,
@@ -334,7 +338,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                 ),
             )
 
-            fig_rdf.update_xaxes(title_text="r (Å)")
-            fig_rdf.update_yaxes(title_text="g(r)")
+            ss.fig_solvrdf.update_xaxes(title_text="r (Å)")
+            ss.fig_solvrdf.update_yaxes(title_text="g(r)")
 
-            st.plotly_chart(fig_rdf, use_container_width=True)
+            st.plotly_chart(ss.fig_solvrdf, use_container_width=True)
