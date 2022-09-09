@@ -72,9 +72,13 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         # Atom-Atom Radial Distribution Function (RDF)
 
-        atom1 = st.sidebar.text_input("Select atom type 1: ", value="O")
-        atom2 = st.sidebar.text_input("Select atom type 2: ", value="O")
-        show_water = st.checkbox("Show water O-O RDF")
+        tab1_col1, tab1_col2: st.columns(2)
+
+        with tab1_col1:
+
+            atom1 = st.text_input("Select atom type 1: ", value="O")
+            atom2 = st.text_input("Select atom type 2: ", value="O")
+            show_water = st.checkbox("Show water O-O RDF")
 
         u = create_u()
 
@@ -94,42 +98,44 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             exclusion_block=(1, 1),
         )
 
-        if "fig_rdf" not in ss or st.button(f"Clear {atom1}-{atom2} RDF"):
-            ss.fig_rdf = go.Figure()
+        with tab1_col2:
 
-        if "rdf_atom" not in ss:
-            ss["rdf_atom"] = None
-        if st.button(f"Calculate {atom1}-{atom2} RDF"):
-            ss["rdf_atom"] = rdf.run(step=1)
-            rdf_atom = ss["rdf_atom"]
+            if "fig_rdf" not in ss or st.button(f"Clear {atom1}-{atom2} RDF"):
+                ss.fig_rdf = go.Figure()
 
-            ss.fig_rdf = go.Figure()
+            if "rdf_atom" not in ss:
+                ss["rdf_atom"] = None
+            if st.button(f"Calculate {atom1}-{atom2} RDF"):
+                ss["rdf_atom"] = rdf.run(step=1)
+                rdf_atom = ss["rdf_atom"]
 
-            import os
+                ss.fig_rdf = go.Figure()
 
-            exp_path = f"{os.path.dirname(__file__)}/../data/rdf_atom_exp.csv"
+                import os
 
-            exp = pd.read_csv(exp_path)
+                exp_path = f"{os.path.dirname(__file__)}/../data/rdf_atom_exp.csv"
 
-            if show_water:
+                exp = pd.read_csv(exp_path)
+
+                if show_water:
+                    ss.fig_rdf.add_trace(
+                        go.Scatter(
+                            x=exp["r (Å)"],
+                            y=exp["g_OO"],
+                            name="Experimental",
+                        ),
+                    )
+
                 ss.fig_rdf.add_trace(
                     go.Scatter(
-                        x=exp["r (Å)"],
-                        y=exp["g_OO"],
-                        name="Experimental",
+                        x=rdf_atom.results.bins,
+                        y=rdf_atom.results.rdf,
+                        name="Calculated",
                     ),
                 )
 
-            ss.fig_rdf.add_trace(
-                go.Scatter(
-                    x=rdf_atom.results.bins,
-                    y=rdf_atom.results.rdf,
-                    name="Calculated",
-                ),
-            )
-
-            ss.fig_rdf.update_xaxes(title_text="r (Å)")
-            ss.fig_rdf.update_yaxes(title_text="g(r) O-O")
+                ss.fig_rdf.update_xaxes(title_text="r (Å)")
+                ss.fig_rdf.update_yaxes(title_text="g(r) O-O")
 
         st.plotly_chart(ss.fig_rdf, use_container_width=True)
 
