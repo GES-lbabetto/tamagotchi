@@ -72,7 +72,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         # Atom-Atom Radial Distribution Function (RDF)
 
-        tab1_col1, tab1_col2: st.columns(2)
+        tab1_col1, tab1_col2 = st.columns(2)
 
         with tab1_col1:
 
