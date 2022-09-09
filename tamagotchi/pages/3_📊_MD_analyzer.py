@@ -94,12 +94,12 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             exclusion_block=(1, 1),
         )
 
-        if "fig_rdf" not in ss or st.button("Clear RDF plot"):
+        if "fig_rdf" not in ss or st.button(f"Clear {atom1}-{atom2} RDF"):
             ss.fig_rdf = go.Figure()
 
         if "rdf_atom" not in ss:
             ss["rdf_atom"] = None
-        if st.button("Calculate {atom1}-{atom2} RDF"):
+        if st.button(f"Calculate {atom1}-{atom2} RDF"):
             ss["rdf_atom"] = rdf.run(step=1)
             rdf_atom = ss["rdf_atom"]
 
