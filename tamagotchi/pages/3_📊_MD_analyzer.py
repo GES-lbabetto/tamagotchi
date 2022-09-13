@@ -113,7 +113,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
                 import os
 
-                exp_path = f"{os.path.dirname(__file__)}/../data/rdf_OO_exp.csv"
+                exp_path = f"{os.path.dirname(__file__)}/../data/RDF_OO_exp.csv"
 
                 exp = pd.read_csv(exp_path)
 
