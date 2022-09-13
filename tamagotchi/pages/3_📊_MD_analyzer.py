@@ -113,7 +113,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
                 import os
 
-                exp_path = f"{os.path.dirname(__file__)}/../data/rdf_atom_exp.csv"
+                exp_path = f"{os.path.dirname(__file__)}/../data/rdf_OO_exp.csv"
 
                 exp = pd.read_csv(exp_path)
 
@@ -155,14 +155,14 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
             ss["ldens"] = ldens.run()
             ldens = ss["ldens"]
 
-            fig_ldens = go.Figure()
+            ss.fig_ldens = go.Figure()
             average = (
                 ldens.results.x.mass_density
                 + ldens.results.y.mass_density
                 + ldens.results.z.mass_density
             ) / 3
 
-            fig_ldens.add_trace(
+            ss.fig_ldens.add_trace(
                 go.Scatter(
                     x=ldens.results.x.hist_bin_edges,
                     y=ldens.results.x.mass_density,
@@ -173,7 +173,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     },
                 ),
             )
-            fig_ldens.add_trace(
+            ss.fig_ldens.add_trace(
                 go.Scatter(
                     x=ldens.results.y.hist_bin_edges,
                     y=ldens.results.y.mass_density,
@@ -184,7 +184,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     },
                 ),
             )
-            fig_ldens.add_trace(
+            ss.fig_ldens.add_trace(
                 go.Scatter(
                     x=ldens.results.z.hist_bin_edges,
                     y=ldens.results.z.mass_density,
@@ -195,7 +195,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     },
                 ),
             )
-            fig_ldens.add_trace(
+            ss.fig_ldens.add_trace(
                 go.Scatter(
                     x=ldens.results.z.hist_bin_edges,
                     y=average,
@@ -206,7 +206,10 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     },
                 ),
             )
-            st.plotly_chart(fig_ldens, use_container_width=True)
+
+            ss.fig_ldens.update_xaxes(title_text="position (Å)")
+            ss.fig_ldens.update_yaxes(title_text="density (kg/L)")
+            st.plotly_chart(ss.fig_ldens, use_container_width=True)
 
     with tab3:
 
