@@ -103,15 +103,6 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
             if "fig_rdf" not in ss or st.button(f"Clear {atom1}-{atom2} RDF"):
                 ss.fig_rdf = go.Figure()
-
-            if "rdf_atom" not in ss:
-                ss["rdf_atom"] = None
-            if st.button(f"Calculate {atom1}-{atom2} RDF"):
-                ss["rdf_atom"] = rdf.run(step=1)
-                rdf_atom = ss["rdf_atom"]
-
-                import os
-
                 if show_water:
                     exp_path = (
                         f"{os.path.dirname(__file__)}/../data/RDF_water_{atom1}{atom2}.csv"
@@ -135,6 +126,14 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                             name="Experimental",
                         ),
                     )
+
+            if "rdf_atom" not in ss:
+                ss["rdf_atom"] = None
+            if st.button(f"Calculate {atom1}-{atom2} RDF"):
+                ss["rdf_atom"] = rdf.run(step=1)
+                rdf_atom = ss["rdf_atom"]
+
+                import os
 
                 ss.fig_rdf.add_trace(
                     go.Scatter(
