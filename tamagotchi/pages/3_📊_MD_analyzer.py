@@ -110,8 +110,6 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                 ss["rdf_atom"] = rdf.run(step=1)
                 rdf_atom = ss["rdf_atom"]
 
-                ss.fig_rdf = go.Figure()
-
                 import os
 
                 if show_water:
