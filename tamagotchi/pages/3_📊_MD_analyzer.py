@@ -116,6 +116,10 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                             x=exp["r (Å)"],
                             y=exp[f"g_{atom1}{atom2}"],
                             name="Experimental",
+                            line={
+                                "color": "black",
+                                "dash": "dash",
+                            },
                         ),
                     )
                 if show_AN:
@@ -126,6 +130,10 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                             x=exp["r (Å)"],
                             y=exp[f"g_{atom1}{atom2}"],
                             name="Experimental",
+                            line={
+                                "color": "black",
+                                "dash": "dash",
+                            },
                         ),
                     )
 
