@@ -76,7 +76,8 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
         with tab1_col1:
 
-            show_water = st.checkbox("Show water O-O RDF")
+            show_water = st.checkbox("System contains water")
+            show_AN = st.checkbox("System contains acetonitrile")
             atom1 = st.text_input("Select atom type 1: ", value="O")
             atom2 = st.text_input("Select atom type 2: ", value="O")
 
@@ -113,15 +114,26 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
 
                 import os
 
-                exp_path = f"{os.path.dirname(__file__)}/../data/RDF_OO_exp.csv"
-
-                exp = pd.read_csv(exp_path)
-
                 if show_water:
+                    exp_path = (
+                        f"{os.path.dirname(__file__)}/../data/RDF_water_{atom1}{atom2}.csv"
+                    )
+                    exp = pd.read_csv(exp_path)
                     ss.fig_rdf.add_trace(
                         go.Scatter(
                             x=exp["r (Å)"],
-                            y=exp["g_OO"],
+                            y=exp[f"g_{atom1}{atom2}"],
+                            name="Experimental",
+                        ),
+                    )
+
+                if show_AN:
+                    exp_path = f"{os.path.dirname(__file__)}/../data/RDF_acetonitrile_{atom1}{atom2}.csv"
+                    exp = pd.read_csv(exp_path)
+                    ss.fig_rdf.add_trace(
+                        go.Scatter(
+                            x=exp["r (Å)"],
+                            y=exp[f"g_{atom1}{atom2}"],
                             name="Experimental",
                         ),
                     )
@@ -135,7 +147,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                 )
 
                 ss.fig_rdf.update_xaxes(title_text="r (Å)")
-                ss.fig_rdf.update_yaxes(title_text="g(r) O-O")
+                ss.fig_rdf.update_yaxes(title_text=f"g(r) {atom1}-{atom2}")
 
         st.plotly_chart(ss.fig_rdf, use_container_width=True)
 
