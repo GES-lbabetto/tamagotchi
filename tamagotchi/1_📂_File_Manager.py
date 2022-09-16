@@ -137,7 +137,8 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs:
 
-                    name = os.path.splitext(os.path.abspath(file_1.name))[0]
+                    name = os.path.splitext(os.path.basename(file_1.name))[0]
+
                     md = MD(os.path.splitext(file_1.name)[0])
 
                     for file_2 in ss.FileBuffer:
