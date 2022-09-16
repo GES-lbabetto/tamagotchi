@@ -163,6 +163,7 @@ with setup_tab:
                     ss.MDs[md.name] = md
 
         st.write("---")
+        ss.MDs.sort(key=lambda x: x.name)
         for md in ss.MDs:
             st.write(f"##### {ss.MDs[md].name}")
             st.write(f"* output: ``{ss.MDs[md].out.name if ss.MDs[md].out else None}``")
