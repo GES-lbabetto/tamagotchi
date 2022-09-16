@@ -451,10 +451,14 @@ with density_tab:
             continue
 
         total_weight = 0.0
-        for line in md.mol2:
-            if len(line.split()) == 9:
-                total_weight += float(atom_weights[line.split()[1]])
-        total_weight *= amu  # g
+        if md.mol2:
+            for line in md.mol2:
+                if len(line.split()) == 9:
+                    total_weight += float(atom_weights[line.split()[1]])
+            total_weight *= amu  # g
+        else:
+            st.warning(f"Sorry, no topology file available for {md.name}!")
+            continue
 
         dens_ps = st.slider(
             label="Calculate density at (ps):",
