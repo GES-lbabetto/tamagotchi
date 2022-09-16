@@ -142,11 +142,11 @@ with setup_tab:
                     basename_1.replace("_md", "")
 
                     if basename_1 == "":
-                        md = os.path.splitext(
+                        basename_1 = os.path.splitext(
                             os.path.basename(os.path.dirname(file_1.name))
                         )[0]
-                    else:
-                        md = MD(basename_1)
+
+                    md = MD(basename_1)
 
                     for file_2 in ss.FileBuffer:
                         basename_2 = os.path.splitext(os.path.basename(file_1.name))[0]
