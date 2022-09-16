@@ -149,7 +149,7 @@ with setup_tab:
                     md = MD(basename_1)
 
                     for file_2 in ss.FileBuffer:
-                        basename_2 = os.path.splitext(os.path.basename(file_1.name))[0]
+                        basename_2 = os.path.splitext(os.path.basename(file_2.name))[0]
                         basename_2.replace("_geo_end", "")
                         basename_2.replace("_md", "")
                         if basename_2 == md.name:
