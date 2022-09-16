@@ -133,6 +133,7 @@ with setup_tab:
 
         st.write("### Available MDs:")
         if st.button("🔃 Initialize MDs"):
+            ss.MDs = {}
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs:
 
