@@ -110,7 +110,7 @@ with upload_tab:
     local_files += glob.glob("/scratch/lbabetto/**/*.pbc", recursive=True)
 
     for file in local_files:
-        if file.name not in [file.name for file in ss.FileBuffer]:
+        if file not in [file.name for file in ss.FileBuffer]:
             with open(file, "rb") as f:
                 ss.FileBuffer.append(BytesStreamManager(file, BytesIO(f.read())))
 
