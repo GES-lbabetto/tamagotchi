@@ -13,22 +13,10 @@ import streamlit as st
 ss = st.session_state
 
 
-options = [out for out in ss.OUTs] + [xyz for xyz in ss.XYZs]
+options = [ss.MDs[md] for md in ss.MDs]
 options.sort(key=lambda x: x.name)
 selections = st.sidebar.multiselect(
-    "Select output files", options, format_func=lambda x: x.name
-)
-
-topo_options = [item for item in ss.MOL2s]
-topo_options.sort(key=lambda x: x.name)
-topo_file = st.sidebar.selectbox(
-    "Select topology file", topo_options, format_func=lambda x: x.name
-)
-
-pbc_options = [item for item in ss.PBCs]
-pbc_options.sort(key=lambda x: x.name)
-pbc_file = st.sidebar.selectbox(
-    "Select pbc file", pbc_options, format_func=lambda x: x.name
+    "Select MD experiments", options, format_func=lambda x: x.name
 )
 
 
@@ -168,26 +156,26 @@ def read_xyz_traj(xyz_traj):
     return df
 
 
-tab1, tab2, tab3 = st.tabs(
+energy_tab, std_tab, density_tab = st.tabs(
     [
-        "Energy",
-        "STD",
-        "Density",
+        "📉 Energy",
+        "📊 STD",
+        "📈 Density",
     ]
 )
 
-with tab1:
+with energy_tab:
 
-    for file in selections:
+    for md in selections:
 
-        if file.name[-4:] == ".out":
-            df = read_md_out(file)
-        elif file.name[-4:] == ".xyz":
-            df = read_xyz_traj(file)
+        if md.out:
+            df = read_md_out(md.out)
+        elif md.xyz:
+            df = read_xyz_traj(md.xyz)
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        title = file.name
+        title = md.name
 
         fig.update_layout(title=title)
 
@@ -237,7 +225,7 @@ with tab1:
             min_value=int(df.index[0] * ss.timestep),
             max_value=int(df.index[-1] * ss.timestep),
             value=(int(df.index[0] * ss.timestep), int(df.index[-1] * ss.timestep)),
-            key=f"{file.name}_en",
+            key=f"{md.name}_en",
         )
 
         average = (
@@ -315,23 +303,23 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
 
 
-with tab2:
+with std_tab:
 
     fig2_bins = st.number_input(
         label="Number of bins:",
         value=100,
     )
 
-    for file in selections:
+    for md in selections:
 
-        if file.name[-4:] == ".out":
-            df = read_md_out(file)
-        elif file.name[-4:] == ".xyz":
-            df = read_xyz_traj(file)
+        if md.out:
+            df = read_md_out(md.out)
+        elif md.xyz:
+            df = read_xyz_traj(md.xyz)
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        title = file.name
+        title = md.name
 
         fig.update_layout(title=title)
 
@@ -388,7 +376,7 @@ with tab2:
             min_value=int(df.index[0] * ss.timestep),
             max_value=int(df.index[-1] * ss.timestep),
             value=(int(df.index[0] * ss.timestep), int(df.index[-1] * ss.timestep)),
-            key=f"{file.name}_dist",
+            key=f"{md.name}_dist",
         )
         fig2 = go.Figure(
             px.histogram(
@@ -408,7 +396,7 @@ with tab2:
         st.plotly_chart(fig2, use_container_width=True)
 
 
-with tab3:
+with density_tab:
 
     amu = 1.66054e-24
     atom_weights = {
@@ -454,15 +442,16 @@ with tab3:
         "Hg": 200.592,
     }
 
-    for file in selections:
+    for md in selections:
 
-        if file.name[-4:] == ".out":
-            df = read_md_out(file)
-        elif file.name[-4:] == ".xyz":
+        if md.out:
+            df = read_md_out(md.out)
+        else:
+            st.warning(f"Sorry, no trajectory file available for {md.name}!")
             continue
 
         total_weight = 0.0
-        for line in topo_file:
+        for line in md.mol2:
             if len(line.split()) == 9:
                 total_weight += float(atom_weights[line.split()[1]])
         total_weight *= amu  # g
@@ -472,7 +461,7 @@ with tab3:
             min_value=int(df.index[0] * ss.timestep),
             max_value=int(df.index[-1] * ss.timestep),
             value=int(int(df.index[-1] * ss.timestep)),
-            key=f"{file.name}_dens",
+            key=f"{md.name}_dens",
         )
 
         sel_dens = (
@@ -484,7 +473,7 @@ with tab3:
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        title = file.name
+        title = md.name
 
         fig.update_layout(title=title)
 

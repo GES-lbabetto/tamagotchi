@@ -13,6 +13,15 @@ st.set_page_config(layout="wide")
 ss = st.session_state
 
 
+class MD:
+    def __init__(self, name: str):
+        self.name = name
+        self.out = None
+        self.xyz = None
+        self.mol2 = None
+        self.pbc = None
+
+
 @dataclass
 class BytesStreamManager:
     name: str
@@ -47,20 +56,15 @@ class BytesStreamManager:
 
 
 # Initializing file buffers
-if "OUTs" not in ss:
-    ss.OUTs = []
-if "XYZs" not in ss:
-    ss.XYZs = []
-if "MOL2s" not in ss:
-    ss.MOL2s = []
-if "PBCs" not in ss:
-    ss.PBCs = []
+if "FileBuffer" not in ss:
+    ss.FileBuffer = []
+if "MDs" not in ss:
+    ss.MDs = {}
 
-tab1, tab2, tab3 = st.tabs(
+upload_tab, setup_tab = st.tabs(
     [
-        "Upload",
-        "Edit",
-        "Setup",
+        "📤 Upload",
+        "✍ Setup",
     ]
 )
 
@@ -84,29 +88,10 @@ def merge_files(selections, filebuffer):
     st.experimental_rerun()
 
 
-def remove_files(selections, filebuffer):
-    newbuffer = []
-    for id, file in enumerate(ss[filebuffer]):
-        if not selections[id]:
-            newbuffer.append(file)
-    ss[filebuffer] = newbuffer
-    st.experimental_rerun()
+ss.timestep = float(st.sidebar.number_input("Timestep (fs): ", value=1.0)) / 1000
+ss.mdrestartfreq = int(st.sidebar.number_input("MD stride: ", value=100))
 
-
-def rename_file(selections, newname, filebuffer):
-    newbuffer = []
-    if selections.count(True) > 1:
-        st.error("ERROR: cannot rename more than 1 file at the same time!")
-        return
-    for id, file in enumerate(ss[filebuffer]):
-        if selections[id]:
-            file.name = newname
-        newbuffer.append(file)
-    ss[filebuffer] = newbuffer
-    st.experimental_rerun()
-
-
-with tab1:
+with upload_tab:
 
     with st.form("File upload form", clear_on_submit=True):
         buffer = st.file_uploader(
@@ -114,7 +99,7 @@ with tab1:
             type=["xyz", "mol2", "pbc", "out"],
             accept_multiple_files=True,
         )
-        submitted = st.form_submit_button("Submit")
+        submitted = st.form_submit_button("📤 Submit")
 
     import glob
 
@@ -125,137 +110,75 @@ with tab1:
     local_files += glob.glob("/scratch/lbabetto/**/*.pbc", recursive=True)
 
     for file in local_files:
-        if os.path.splitext(file)[1] == ".out" and file not in [
-            file.name for file in ss.OUTs
-        ]:
+        if file.name not in [file.name for file in ss.FileBuffer]:
             with open(file, "rb") as f:
-                ss.OUTs.append(BytesStreamManager(file, BytesIO(f.read())))
-        if os.path.splitext(file)[1] == ".xyz" and file not in [
-            file.name for file in ss.XYZs
-        ]:
-            with open(file, "rb") as f:
-                ss.XYZs.append(BytesStreamManager(file, BytesIO(f.read())))
-        if os.path.splitext(file)[1] == ".mol2" and file not in [
-            file.name for file in ss.MOL2s
-        ]:
-            with open(file, "rb") as f:
-                ss.MOL2s.append(BytesStreamManager(file, BytesIO(f.read())))
-        if os.path.splitext(file)[1] == ".pbc" and file not in [
-            file.name for file in ss.PBCs
-        ]:
-            with open(file, "rb") as f:
-                ss.PBCs.append(BytesStreamManager(file, BytesIO(f.read())))
+                ss.FileBuffer.append(BytesStreamManager(file, BytesIO(f.read())))
 
     if submitted and buffer != [] and buffer is not None:
         for file in buffer:
-            if os.path.splitext(file.name)[1] == ".out":
-                ss.OUTs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
-            if os.path.splitext(file.name)[1] == ".xyz":
-                ss.XYZs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
-            elif os.path.splitext(file.name)[1] == ".mol2":
-                ss.MOL2s.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
-            elif os.path.splitext(file.name)[1] == ".pbc":
-                ss.PBCs.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
+            ss.FileBuffer.append(BytesStreamManager(file.name, BytesIO(file.getvalue())))
         st.experimental_rerun()
 
-    ss.OUTs.sort(key=lambda x: x.name)
-
-    if ss.OUTs != []:
-        st.write("**Output files:**")
-        out_selections = []
-        for file in ss.OUTs:
+    ss.FileBuffer.sort(key=lambda x: x.name)
+    if ss.FileBuffer != []:
+        st.write("### Loaded files:")
+        for file in ss.FileBuffer:
             st.write(f"* {file.name}")
 
-    if ss.XYZs != []:
-        st.write("**Trajectory files:**")
-        xyz_selections = []
-        for file in ss.XYZs:
-            st.write(f"* {file.name}")
+with setup_tab:
 
-    if ss.MOL2s != []:
-        st.write("**Topology files:**")
-        mol2_selections = []
-        for file in ss.MOL2s:
-            st.write(f"* {file.name}")
+    setup_col1, setup_col2 = st.columns(2)
 
-    if ss.PBCs != []:
-        st.write("**PBC files:**")
-        pbc_selections = []
-        for file in ss.PBCs:
-            st.write(f"* {file.name}")
+    with setup_col1:
 
+        st.write("### Available MDs:")
+        if st.button("🔃 Initialize MDs"):
+            for file_1 in ss.FileBuffer:
+                if os.path.splitext(file_1.name)[0] not in ss.MDs:
 
-with tab2:
+                    md = MD(os.path.splitext(file_1.name)[0])
 
-    if ss.OUTs != []:
-        st.write("**Output files:**")
-        outcol1, outcol2, outcol3 = st.columns([1, 1, 2])
-        with outcol1:
-            out_selections = []
-            for file in ss.OUTs:
-                out_selections.append(st.checkbox(file.name, key=file))
-        with outcol2:
-            if st.button("Remove output files"):
-                remove_files(out_selections, "OUTs")
-            if st.button("Merge output files"):
-                merge_files(out_selections, "OUTs")
-            newname = st.text_input("New name for selected OUT file:")
-            if st.button("Rename output file"):
-                rename_file(out_selections, newname, "OUTs")
+                    for file_2 in ss.FileBuffer:
+                        if os.path.splitext(file_2.name)[0] == md.name:
+                            setattr(md, os.path.splitext(file_2.name)[1][1:], file_2)
+
+                    ss.MDs[md.name] = md
+
         st.write("---")
+        for md in ss.MDs:
+            st.write(f"##### {ss.MDs[md].name}")
+            st.write(f"* output: ``{ss.MDs[md].out.name if ss.MDs[md].out else None}``")
+            st.write(f"* trajectory: ``{ss.MDs[md].xyz.name if ss.MDs[md].xyz else None}``")
+            st.write(f"* topology: ``{ss.MDs[md].mol2.name if ss.MDs[md].mol2 else None}``")
+            st.write(f"* pbc: ``{ss.MDs[md].pbc.name if ss.MDs[md].pbc else None}``")
+            st.write("---")
 
-    if ss.XYZs != []:
-        st.write("**Trajectory files:**")
-        xyzcol1, xyzcol2, xyzcol3 = st.columns([1, 1, 2])
-        with xyzcol1:
-            xyz_selections = []
-            for file in ss.XYZs:
-                xyz_selections.append(st.checkbox(file.name, key=file))
-        with xyzcol2:
-            if st.button("Remove trajectory files"):
-                remove_files(xyz_selections, "XYZs")
-            if st.button("Merge trajectory files"):
-                merge_files(xyz_selections, "XYZs")
-            newname = st.text_input("New name for selected XYZ file:")
-            if st.button("Rename trajectory file"):
-                rename_file(xyz_selections, newname, "XYZs")
-        st.write("---")
+    with setup_col2:
 
-    if ss.MOL2s != []:
-        st.write("**Topology files:**")
-        mol2col1, mol2col2, mol2col3 = st.columns([1, 1, 2])
-        with mol2col1:
-            mol2_selections = []
-            for file in ss.MOL2s:
-                mol2_selections.append(st.checkbox(file.name, key=file))
-        with mol2col2:
-            if st.button("Remove topology files"):
-                remove_files(mol2_selections, "MOL2s")
-            if st.button("Merge topology files"):
-                merge_files(mol2_selections, "MOL2s")
-            newname = st.text_input("New name for selected MOL2 file:")
-            if st.button("Rename topology file"):
-                rename_file(mol2_selections, newname, "MOL2s")
-        st.write("---")
+        st.write("### Edit MD:")
+        md_selection = st.selectbox(
+            "Select MD:", ss.MDs, format_func=lambda x: ss.MDs[x].name
+        )
 
-    if ss.PBCs != []:
-        st.write("**Trajectory files:**")
-        pbccol1, pbccol2, pbccol3 = st.columns([1, 1, 2])
-        with pbccol1:
-            pbc_selections = []
-            for file in ss.PBCs:
-                pbc_selections.append(st.checkbox(file.name, key=file))
-        with pbccol2:
-            if st.button("Remove PBC files"):
-                remove_files(pbc_selections, "PBCs")
-            if st.button("Merge PBC files"):
-                merge_files(pbc_selections, "PBCs")
-            newname = st.text_input("New name for selected PBC file:")
-            if st.button("Rename PBC file"):
-                rename_file(pbc_selections, newname, "PBCs")
-        st.write("---")
+        rename_string = st.text_input("Rename MD:")
+        if st.button("📝 Rename MD"):
+            ss.MDs[md_selection].name = rename_string
+            st.experimental_rerun()
+        if st.button("❌ Remove MD"):
+            del ss.MDs[md_selection]
+            st.experimental_rerun()
 
-
-with tab3:
-    ss.timestep = float(st.number_input("Timestep (fs): ", value=1.0)) / 1000
-    ss.mdrestartfreq = int(st.number_input("MD stride: ", value=100))
+        st.write("Overwrite MD data:")
+        file_type = st.selectbox("File type:", ["out", "xyz", "mol2", "pbc"])
+        overwrite_file = st.selectbox(
+            "Select file with new data",
+            [
+                file
+                for file in ss.FileBuffer
+                if os.path.splitext(file.name)[1] == f".{file_type}"
+            ],
+            format_func=lambda x: x.name,
+        )
+        if st.button("💿 Overwrite MD data"):
+            setattr(ss.MDs[md_selection], file_type, overwrite_file)
+            st.experimental_rerun()
