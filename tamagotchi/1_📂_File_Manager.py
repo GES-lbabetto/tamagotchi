@@ -137,19 +137,19 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs:
 
-                    md = MD(os.path.splitext(file_1.name)[0])
+                    basename = os.path.splitext(os.path.basename(file_1.name))[0].rstrip(
+                        "_geondm"
+                    )
+                    if basename == "geo_end" or basename == "md":
+                        md = os.path.splitext(
+                            os.path.basename(os.path.dirname(file_1.name))
+                        )[0]
+                    else:
+                        md = MD(basename)
 
                     for file_2 in ss.FileBuffer:
                         if os.path.splitext(file_2.name)[0] == md.name:
                             setattr(md, os.path.splitext(file_2.name)[1][1:], file_2)
-
-                    basename = os.path.splitext(os.path.basename(file_1.name))[0]
-                    if basename == "geo_end" or basename == "md":
-                        md.name = os.path.splitext(
-                            os.path.basename(os.path.dirname(file_1.name))
-                        )[0]
-                    else:
-                        md.name = basename
 
                     ss.MDs[md.name] = md
 
