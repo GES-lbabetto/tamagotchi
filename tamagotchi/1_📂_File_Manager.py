@@ -143,6 +143,9 @@ with setup_tab:
                         .replace("_md", "")
                     )
 
+                    if basename_1 == "geo_end" or basename_1 == "md":
+                        basename_1 = os.path.basename(os.path.dirname(file_1.name))
+
                     md = MD(basename_1)
 
                     for file_2 in ss.FileBuffer:
@@ -151,6 +154,9 @@ with setup_tab:
                             .replace("_geo_end", "")
                             .replace("_md", "")
                         )
+                        if basename_2 == "geo_end" or basename_2 == "md":
+                            basename_2 = os.path.basename(os.path.dirname(file_2.name))
+
                         if basename_2 == md.name:
                             setattr(md, os.path.splitext(file_2.name)[1][1:], file_2)
 
