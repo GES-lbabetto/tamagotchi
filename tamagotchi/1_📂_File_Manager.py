@@ -143,7 +143,7 @@ with setup_tab:
 
                     if basename_1 == "":
                         basename_1 = os.path.splitext(
-                            os.path.basename(os.path.dirname(file_1.name))
+                            os.path.dirname(os.path.basename(file_1.name))
                         )[0]
 
                     md = MD(basename_1)
