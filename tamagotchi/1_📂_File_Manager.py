@@ -137,15 +137,19 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs:
 
-                    name = os.path.splitext(os.path.basename(file_1.name))[0]
-
                     md = MD(os.path.splitext(file_1.name)[0])
 
                     for file_2 in ss.FileBuffer:
                         if os.path.splitext(file_2.name)[0] == md.name:
                             setattr(md, os.path.splitext(file_2.name)[1][1:], file_2)
 
-                    md.name = name
+                    basename = os.path.splitext(os.path.basename(file_1.name))[0]
+                    if basename == "geo_end" or basename == "md":
+                        md.name = os.path.splitext(
+                            os.path.basename(os.path.dirname(file_1.name))
+                        )[0]
+                    else:
+                        md.name = basename
 
                     ss.MDs[md.name] = md
 
@@ -161,16 +165,18 @@ with setup_tab:
     with setup_col2:
 
         st.write("### Edit MD:")
-        md_selection = st.selectbox(
+        md_selections = st.multiselect(
             "Select MD:", ss.MDs, format_func=lambda x: ss.MDs[x].name
         )
 
         rename_string = st.text_input("Rename MD:")
         if st.button("📝 Rename MD"):
-            ss.MDs[md_selection].name = rename_string
+            for md_selection in md_selections:
+                ss.MDs[md_selection].name = rename_string
             st.experimental_rerun()
         if st.button("❌ Remove MD"):
-            del ss.MDs[md_selection]
+            for md_selection in md_selections:
+                del ss.MDs[md_selection]
             st.experimental_rerun()
 
         st.write("Overwrite MD data:")
@@ -185,5 +191,6 @@ with setup_tab:
             format_func=lambda x: x.name,
         )
         if st.button("💿 Overwrite MD data"):
-            setattr(ss.MDs[md_selection], file_type, overwrite_file)
+            for md_selection in md_selections:
+                setattr(ss.MDs[md_selection], file_type, overwrite_file)
             st.experimental_rerun()
