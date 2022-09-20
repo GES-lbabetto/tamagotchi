@@ -456,6 +456,11 @@ with density_tab:
                 if len(line.split()) == 9:
                     total_weight += float(atom_weights[line.split()[1]])
             total_weight *= amu  # g
+        elif md.pbd:
+            for line in md.pbd:
+                if len(line.split()) == 11:
+                    total_weight += float(atom_weights[line.split()[2]])
+            total_weight *= amu  # g
         else:
             st.warning(f"Sorry, no topology file available for {md.name}!")
             continue

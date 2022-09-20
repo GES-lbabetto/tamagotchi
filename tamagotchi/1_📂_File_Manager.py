@@ -19,6 +19,7 @@ class MD:
         self.out = None
         self.xyz = None
         self.mol2 = None
+        self.pdb = None
         self.pbc = None
 
 
@@ -96,7 +97,7 @@ with upload_tab:
     with st.form("File upload form", clear_on_submit=True):
         buffer = st.file_uploader(
             "Select the files to upload",
-            type=["xyz", "mol2", "pbc", "out"],
+            type=["xyz", "mol2", "pdb", "pbc", "out"],
             accept_multiple_files=True,
         )
         submitted = st.form_submit_button("📤 Submit")
@@ -107,6 +108,7 @@ with upload_tab:
     local_files += glob.glob("/scratch/lbabetto/**/*md.out", recursive=True)
     local_files += glob.glob("/scratch/lbabetto/**/*geo_end.xyz", recursive=True)
     local_files += glob.glob("/scratch/lbabetto/**/*.mol2", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*.pdb", recursive=True)
     local_files += glob.glob("/scratch/lbabetto/**/*.pbc", recursive=True)
 
     for file in local_files:
@@ -167,7 +169,8 @@ with setup_tab:
             st.write(f"##### {ss.MDs[md].name}")
             st.write(f"* output: ``{ss.MDs[md].out.name if ss.MDs[md].out else None}``")
             st.write(f"* trajectory: ``{ss.MDs[md].xyz.name if ss.MDs[md].xyz else None}``")
-            st.write(f"* topology: ``{ss.MDs[md].mol2.name if ss.MDs[md].mol2 else None}``")
+            st.write(f"* mol2: ``{ss.MDs[md].mol2.name if ss.MDs[md].mol2 else None}``")
+            st.write(f"* pdb: ``{ss.MDs[md].pdb.name if ss.MDs[md].pdb else None}``")
             st.write(f"* pbc: ``{ss.MDs[md].pbc.name if ss.MDs[md].pbc else None}``")
             st.write("---")
 
@@ -189,7 +192,7 @@ with setup_tab:
             st.experimental_rerun()
 
         st.write("Overwrite MD data:")
-        file_type = st.selectbox("File type:", ["out", "xyz", "mol2", "pbc"])
+        file_type = st.selectbox("File type:", ["out", "xyz", "mol2", "pdb", "pbc"])
         overwrite_file = st.selectbox(
             "Select file with new data",
             [
