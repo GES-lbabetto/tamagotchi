@@ -455,8 +455,8 @@ with density_tab:
                 if len(line.split()) == 9:
                     total_weight += float(atom_weights[line.split()[1]])
             total_weight *= amu  # g
-        elif md.pbd:
-            for line in md.pbd:
+        elif md.pdb:
+            for line in md.pdb:
                 if len(line.split()) == 11:
                     total_weight += float(atom_weights[line.split()[2]])
             total_weight *= amu  # g
