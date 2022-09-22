@@ -2,7 +2,6 @@
 # # # # # # # # # # # # # # # # # #     MD ANALYZER      # # # # # # # # # # # # # # # # # #
 ############################################################################################
 
-from select import select
 import MDAnalysis as mda
 from MDAnalysis import transformations as trans
 from MDAnalysis.analysis.rdf import InterRDF
