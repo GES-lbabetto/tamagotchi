@@ -157,7 +157,7 @@ with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
                     go.Scatter(
                         x=rdf_atom.results.bins,
                         y=rdf_atom.results.rdf,
-                        name="Calculated",
+                        name=selection.name,
                     ),
                 )
 
