@@ -70,25 +70,6 @@ upload_tab, setup_tab = st.tabs(
 )
 
 
-def merge_files(selections, filebuffer):
-
-    newbuffer = []
-    merged_files = []
-
-    for id, file in enumerate(ss[filebuffer]):
-        if selections[id]:
-            merged_files.append(file)
-        else:
-            newbuffer.append(file)
-
-    new_file = merged_files.pop(0)
-    while merged_files:
-        new_file += merged_files.pop(0)
-    newbuffer.append(new_file)
-    ss[filebuffer] = newbuffer
-    st.experimental_rerun()
-
-
 ss.timestep = float(st.sidebar.number_input("Timestep (fs): ", value=1.0)) / 1000
 ss.mdrestartfreq = int(st.sidebar.number_input("MD stride: ", value=100))
 
@@ -102,6 +83,7 @@ with upload_tab:
         )
         submitted = st.form_submit_button("📤 Submit")
 
+    # --> finding local files in scratch directory
     import glob
 
     local_files = []
@@ -115,6 +97,7 @@ with upload_tab:
         if file not in [file.name for file in ss.FileBuffer]:
             with open(file, "rb") as f:
                 ss.FileBuffer.append(BytesStreamManager(file, BytesIO(f.read())))
+    # <---
 
     if submitted and buffer != [] and buffer is not None:
         for file in buffer:
@@ -178,14 +161,29 @@ with setup_tab:
 
         st.write("### Edit MD:")
         md_selections = st.multiselect(
-            "Select MD:", ss.MDs, format_func=lambda x: ss.MDs[x].name
+            "Select MD simulations to edit:", ss.MDs, format_func=lambda x: ss.MDs[x].name
         )
+
+        st.write("Append trajectory data:")
+        append_file = st.selectbox(
+            "Select trajectory file to append",
+            [file for file in ss.FileBuffer if os.path.splitext(file.name)[1] == ".xyz"],
+            format_func=lambda x: x.name,
+        )
+
+        if st.button("🔗 Add trajectory file"):
+            if len(md_selections) > 1:
+                st.error("You should append trajectory files to only one file at a time!")
+            else:
+                ss.MDs[md_selections[0]].xyz += append_file
+                st.experimental_rerun()
 
         rename_string = st.text_input("Rename MD:")
         if st.button("📝 Rename MD"):
             for md_selection in md_selections:
                 ss.MDs[md_selection].name = rename_string
             st.experimental_rerun()
+
         if st.button("❌ Remove MD"):
             for md_selection in md_selections:
                 del ss.MDs[md_selection]
