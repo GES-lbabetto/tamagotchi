@@ -155,10 +155,10 @@ def read_xyz_traj(xyz_traj):
     return df
 
 
-energy_tab, std_tab, density_tab = st.tabs(
+energy_tab, convergence_tab, density_tab = st.tabs(
     [
         "📉 Energy",
-        "📊 STD",
+        "⌚ Convergence",
         "📈 Density",
     ]
 )
@@ -178,17 +178,17 @@ with energy_tab:
 
         fig.update_layout(title=title)
 
-        fig.add_trace(
-            go.Scatter(
-                x=df.index * ss.timestep,
-                y=df["Total MD Energy"] * 23.06,
-                name="Total MD Energy",
-                line={
-                    "width": 0.1,
-                    "color": "blue",
-                },
-            ),
-        )
+        # fig.add_trace(
+        #     go.Scatter(
+        #         x=df.index * ss.timestep,
+        #         y=df["Total MD Energy"] * 23.06,
+        #         name="Total MD Energy",
+        #         line={
+        #             "width": 0.1,
+        #             "color": "blue",
+        #         },
+        #     ),
+        # )
 
         fig.add_trace(
             go.Scatter(
@@ -225,6 +225,31 @@ with energy_tab:
             max_value=int(df.index[-1] * ss.timestep),
             value=(int(df.index[0] * ss.timestep), int(df.index[-1] * ss.timestep)),
             key=f"{md.name}_en",
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df.index[
+                    int(start / ss.timestep / ss.mdrestartfreq) : int(
+                        stop / ss.timestep / ss.mdrestartfreq
+                    ) :
+                ]
+                * ss.timestep,
+                y=df["Total MD Energy"]
+                .iloc()[
+                    int(start / ss.timestep / ss.mdrestartfreq) : int(
+                        stop / ss.timestep / ss.mdrestartfreq
+                    ) :
+                ]
+                .expanding()
+                .mean()
+                * 23.06,
+                name=f"Expanding Average between {start} and {stop} ps",
+                line={
+                    "width": 3,
+                    "color": "red",
+                },
+            ),
         )
 
         average = (
@@ -299,100 +324,152 @@ with energy_tab:
                 * (1 - 1e-5),
             ]
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
 
-with std_tab:
+with convergence_tab:
 
-    fig2_bins = st.number_input(
-        label="Number of bins:",
-        value=100,
+    # fig2_bins = st.number_input(
+    #     label="Number of bins:",
+    #     value=100,
+    # )
+
+    threshold_energy = st.sidebar.number_input(
+        label="Energy convergence threshold (ppm):", value=1
     )
 
-    for md in selections:
+    threshold_time = st.sidebar.number_input(
+        label="Time convergence threshold (ps):", value=100
+    )
 
-        if md.out:
-            df = read_md_out(md.out)
-        elif md.xyz:
-            df = read_xyz_traj(md.xyz)
+    if st.button("🔃 Calculate convergence data!"):
 
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        for md in selections:
 
-        title = md.name
+            if md.out:
+                df = read_md_out(md.out)
+            elif md.xyz:
+                df = read_xyz_traj(md.xyz)
 
-        fig.update_layout(title=title)
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig.add_trace(
-            go.Scatter(
-                x=df.index * ss.timestep,
-                y=df["Total MD Energy"].expanding().mean() * 23.06,
-                name="Total MD Energy Average",
-            ),
-            secondary_y=False,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=df.index * ss.timestep,
-                y=df["Total MD Energy"]
-                .expanding()
-                .mean()
-                .rolling(window=int(10 / ss.timestep / ss.mdrestartfreq))
-                .std()
-                * 23.06,
-                name="Standard Deviation on 10 ps window",
-            ),
-            secondary_y=True,
-        )
-        fig.update_xaxes(title_text="time (ps)")
-        fig.update_yaxes(
-            title_text="Energy (kcal/mol)",
-            range=[
-                df["Total MD Energy"]
-                .expanding()
-                .mean()
-                .iloc()[int(df.index[-1] / 5 / ss.mdrestartfreq) : :]
-                .min()
-                * 23.06
-                * (1 + 1e-5),
-                df["Total MD Energy"]
-                .expanding()
-                .mean()
-                .iloc()[int(df.index[-1] / 5 / ss.mdrestartfreq) : :]
-                .max()
-                * 23.06
-                * (1 - 1e-5),
-            ],
-            secondary_y=False,
-        )
-        fig.update_yaxes(
-            title_text="Standard deviation (kcal/mol)",
-            range=[0, 1],
-            secondary_y=True,
-        )
+            title = md.name
 
-        fig2_start, fig2_stop = st.slider(
-            label="Calculate energy distribution from/to (ps):",
-            min_value=int(df.index[0] * ss.timestep),
-            max_value=int(df.index[-1] * ss.timestep),
-            value=(int(df.index[0] * ss.timestep), int(df.index[-1] * ss.timestep)),
-            key=f"{md.name}_dist",
-        )
-        fig2 = go.Figure(
-            px.histogram(
-                x=df["Total MD Energy"].iloc()[
-                    int(fig2_start / ss.timestep / ss.mdrestartfreq) : int(
-                        fig2_stop / ss.timestep / ss.mdrestartfreq
-                    ) :
-                ],
-                nbins=int(fig2_bins),
+            fig.update_layout(title=title)
+
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index * ss.timestep,
+                    y=df["Total MD Energy"].expanding().mean() * 23.06,
+                    name="Total MD Energy Average",
+                ),
+                secondary_y=False,
             )
-        )
-        fig2.update_layout(title=f"{title} - Distribution of energies")
-        fig2.update_xaxes(title_text="Energy (eV)")
-        fig2.update_yaxes(title_text="Counts")
 
-        st.plotly_chart(fig, use_container_width=True)
-        st.plotly_chart(fig2, use_container_width=True)
+            t_valid = []
+            energy_list = df["Total MD Energy"].expanding().mean().to_list()
+            for i, _ in enumerate(energy_list):
+                exp_av = energy_list[0:i]
+                for step, x in enumerate(exp_av[::-1]):
+                    dx = abs(exp_av[-1] - x) / abs(exp_av[-1]) * 1e6
+                    if dx >= threshold_energy:
+                        t_valid.append(step * ss.timestep * ss.mdrestartfreq)
+                        break
+
+            def moving_average(a, n=100):
+                ret = np.cumsum(a, dtype=float)
+                ret[n:] = ret[n:] - ret[:-n]
+                return ret[n - 1 :] / n
+
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index * ss.timestep,
+                    y=t_valid,
+                    name="T valid",
+                ),
+                secondary_y=True,
+            )
+
+            convergence_reached = False
+            for i, t in enumerate(t_valid):
+                if t > threshold_time:
+                    convergence_reached = True
+                    converged_step = i
+                    break
+            if convergence_reached:
+                average = (
+                    df["Total MD Energy"]
+                    .iloc()[: int(converged_step / ss.timestep / ss.mdrestartfreq) :]
+                    .mean()
+                )
+                dataset_std = (
+                    df["Total MD Energy"]
+                    .iloc()[: int(converged_step / ss.timestep / ss.mdrestartfreq) :]
+                    .std()
+                )
+                npoints = converged_step / ss.timestep / ss.mdrestartfreq
+                average_error = dataset_std / np.sqrt((npoints))
+
+                st.write(
+                    f"**Average Energy after {converged_step * ss.timestep * ss.mdrestartfreq} ps:**\n"
+                    f"* {average:.{len(f'{average_error:.2}')-2}f} ± {average_error:.2} eV\n"
+                    f"* {average*23.06:.{len(f'{average_error*23.06:.2}')-2}f} ± {average_error*23.06:.2} kcal/mol"
+                )
+            else:
+                st.warning(f"Convergence not reached yet for {md.name}!", icon="⚠")
+
+            fig.update_xaxes(title_text="time (ps)")
+            fig.update_yaxes(
+                title_text="Energy (kcal/mol)",
+                range=[
+                    df["Total MD Energy"]
+                    .expanding()
+                    .mean()
+                    .iloc()[int(df.index[-1] / 5 / ss.mdrestartfreq) : :]
+                    .min()
+                    * 23.06
+                    * (1 + 1e-5),
+                    df["Total MD Energy"]
+                    .expanding()
+                    .mean()
+                    .iloc()[int(df.index[-1] / 5 / ss.mdrestartfreq) : :]
+                    .max()
+                    * 23.06
+                    * (1 - 1e-5),
+                ],
+                secondary_y=False,
+            )
+            fig.update_yaxes(
+                title_text="T valid (ps)",
+                range=[0, 100],
+                secondary_y=True,
+            )
+
+            # fig2_start, fig2_stop = st.slider(
+            #     label="Calculate energy distribution from/to (ps):",
+            #     min_value=int(df.index[0] * ss.timestep),
+            #     max_value=int(df.index[-1] * ss.timestep),
+            #     value=(int(df.index[0] * ss.timestep), int(df.index[-1] * ss.timestep)),
+            #     key=f"{md.name}_dist",
+            # )
+
+            # fig2 = go.Figure(
+            #     px.histogram(
+            #         x=df["Total MD Energy"].iloc()[
+            #             int(fig2_start / ss.timestep / ss.mdrestartfreq) : int(
+            #                 fig2_stop / ss.timestep / ss.mdrestartfreq
+            #             ) :
+            #         ],
+            #         nbins=int(fig2_bins),
+            #     )
+            # )
+            # fig2.update_layout(title=f"{title} - Distribution of energies")
+            # fig2.update_xaxes(title_text="Energy (eV)")
+            # fig2.update_yaxes(title_text="Counts")
+
+            st.plotly_chart(fig, use_container_width=True)
+            # st.plotly_chart(fig2, use_container_width=True)
 
 
 with density_tab:

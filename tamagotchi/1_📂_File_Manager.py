@@ -8,6 +8,7 @@ from io import BytesIO, TextIOWrapper
 from typing import List
 import streamlit as st
 import os
+from time import sleep
 
 st.set_page_config(layout="wide")
 ss = st.session_state
@@ -176,17 +177,27 @@ with setup_tab:
                 st.error("You should append trajectory files to only one file at a time!")
             else:
                 ss.MDs[md_selections[0]].xyz += append_file
+                st.success(
+                    f"{append_file.name} added to {ss.MDs[md_selections[0]].name}", icon="✅"
+                )
+                sleep(1)
                 st.experimental_rerun()
 
         rename_string = st.text_input("Rename MD:")
         if st.button("📝 Rename MD"):
             for md_selection in md_selections:
                 ss.MDs[md_selection].name = rename_string
+                st.success(
+                    f"{ss.MDs[md_selection].name} renamed to {rename_string}", icon="✅"
+                )
+                sleep(1)
             st.experimental_rerun()
 
         if st.button("❌ Remove MD"):
             for md_selection in md_selections:
                 del ss.MDs[md_selection]
+                st.success(f"{md_selection} removed", icon="✅")
+                sleep(1)
             st.experimental_rerun()
 
         st.write("Overwrite MD data:")
@@ -203,4 +214,9 @@ with setup_tab:
         if st.button("💿 Overwrite MD data"):
             for md_selection in md_selections:
                 setattr(ss.MDs[md_selection], file_type, overwrite_file)
+                st.success(
+                    f"{ss.MDs[md_selection].file_type}. overwritten with {overwrite_file.name}",
+                    icon="✅",
+                )
+            sleep(1)
             st.experimental_rerun()
