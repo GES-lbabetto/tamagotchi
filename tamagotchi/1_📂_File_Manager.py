@@ -215,8 +215,7 @@ with setup_tab:
             for md_selection in md_selections:
                 setattr(ss.MDs[md_selection], file_type, overwrite_file)
                 st.success(
-                    f"{ss.MDs[md_selection].file_type}. overwritten with {overwrite_file.name}",
-                    icon="✅",
+                    f"{md_selection} .{file_type} set to {overwrite_file.name}", icon="✅"
                 )
-            sleep(1)
+                sleep(1)
             st.experimental_rerun()
