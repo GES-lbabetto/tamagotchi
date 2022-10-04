@@ -121,7 +121,9 @@ with setup_tab:
         if st.button("🔃 Initialize MDs"):
             ss.MDs = {}
             for file_1 in ss.FileBuffer:
-                if os.path.splitext(file_1.name)[0] not in ss.MDs:
+                if os.path.splitext(file_1.name)[0] not in ss.MDs and os.path.splitext(
+                    file_1.name
+                )[1] in [".xyz", ".out"]:
 
                     basename_1 = (
                         os.path.splitext(os.path.basename(file_1.name))[0]
