@@ -208,11 +208,7 @@ with setup_tab:
         file_type = st.selectbox("File type:", extensions)
         overwrite_file = st.selectbox(
             "Select file with new data",
-            [
-                file
-                for file in ss.FileBuffer
-                if os.path.splitext(file.name)[1] == f".{file_type}"
-            ],
+            [file for file in ss.FileBuffer if os.path.splitext(file.name)[1] == file_type],
             format_func=lambda x: x.name,
         )
         if st.button("💿 Overwrite MD data"):
