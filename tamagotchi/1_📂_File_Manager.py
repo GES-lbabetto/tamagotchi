@@ -198,7 +198,14 @@ with setup_tab:
             st.experimental_rerun()
 
         st.write("Overwrite MD data:")
-        file_type = st.selectbox("File type:", ["out", "xyz", "mol2", "pdb", "pbc"])
+
+        extensions = []
+        for file in ss.FileBuffer:
+            ext = os.path.splitext(file.name)[1]
+            if ext not in extensions:
+                extensions.append(ext)
+
+        file_type = st.selectbox("File type:", extensions)
         overwrite_file = st.selectbox(
             "Select file with new data",
             [
