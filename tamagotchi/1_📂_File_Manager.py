@@ -13,6 +13,7 @@ from time import sleep
 st.set_page_config(layout="wide")
 ss = st.session_state
 
+
 @dataclass
 class MD:
     name: str
@@ -149,8 +150,11 @@ with setup_tab:
         st.write("---")
         for md in ss.MDs:
             st.write(f"##### {ss.MDs[md].name}")
-            for property in dir(ss.MDs[md]) if not property.startswith("__"):
-                st.write(f"* {property}: ``{ss.MDs[md].out.name if ss.MDs[md].property else None}``")
+            for property in dir(ss.MDs[md]):
+                if not property.startswith("__"):
+                    st.write(
+                        f"* {property}: ``{ss.MDs[md].out.name if ss.MDs[md].property else None}``"
+                    )
             # st.write(f"* output: ``{ss.MDs[md].out.name if ss.MDs[md].out else None}``")
             # st.write(f"* trajectory: ``{ss.MDs[md].xyz.name if ss.MDs[md].xyz else None}``")
             # st.write(f"* mol2: ``{ss.MDs[md].mol2.name if ss.MDs[md].mol2 else None}``")
