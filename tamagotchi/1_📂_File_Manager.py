@@ -153,7 +153,7 @@ with setup_tab:
             for property in dir(ss.MDs[md]):
                 if not property.startswith("__"):
                     st.write(
-                        f"* {property}: ``{ss.MDs[md].out.name if ss.MDs[md].property else None}``"
+                        f"* {property}: ``{ss.MDs[md].out.name if getattr(ss.MDs[md], property) else None}``"
                     )
             # st.write(f"* output: ``{ss.MDs[md].out.name if ss.MDs[md].out else None}``")
             # st.write(f"* trajectory: ``{ss.MDs[md].xyz.name if ss.MDs[md].xyz else None}``")
