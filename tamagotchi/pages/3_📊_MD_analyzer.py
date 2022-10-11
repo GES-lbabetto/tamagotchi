@@ -86,14 +86,15 @@ def create_u():
     u = mda.Universe(
         topo_tmp.name, traj_tmp.name, format=traj_format, topology_format=topology_format
     )
-    if not os.path.splitext(topo_tmp.name)[1] == ".psf":
+    try:
+        ss.box_side = float(selection.pbc.bytestream.read())
+        u.dimensions = [ss.box_side, ss.box_side, ss.box_side, 90, 90, 90]
+    except:
         try:
-            ss.box_side = float(selection.pbc.bytestream.read())
-            st.success(f".pbc file found for {selection.name}!", icon="✔")
-            u.dimensions = [ss.box_side, ss.box_side, ss.box_side, 90, 90, 90]
+            ss.box_side = u.dimensions[0]
         except:
-            st.warning(f".pbc file not found for {selection.name}!", icon="❗")
-
+            st.error(f"No PBC info found!", icon="❌")
+            st.stop()
     return u
 
 
