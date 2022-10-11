@@ -29,16 +29,18 @@ selection = st.sidebar.selectbox(
 
 topo_tmp = tmp(mode="w+")
 try:
-    if selection.xyz:
-        traj_format = "XYZ"
-        traj_tmp = tmp(mode="w+")
-        traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
+    if selection.dcd:
+        traj_format = "DCD"
+        traj_tmp = tmp(mode="wb+")
+        traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
 except:
     try:
-        if selection.dcd:
-            traj_format = "DCD"
-            traj_tmp = tmp(mode="wb+")
-            traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
+        if selection.xyz:
+            traj_format = "XYZ"
+            traj_tmp = tmp(mode="w+")
+            traj_tmp.write(
+                StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read()
+            )
     except:
         st.error(f"No trajectory file found for {selection.name}!", icon="❌")
         st.stop()
@@ -54,26 +56,24 @@ try:
         ss.resname = "UNL"
 except:
     try:
-        topology_format = "MOL2"
-        topo_tmp.write(
-            StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
-        )
-        st.success(f".mol2 file found for {selection.name}!", icon="✔")
-        for line in selection.mol2:
+        topology_format = "PDB"
+        topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
+        st.success(f".pdb file found for {selection.name}!", icon="✔")
+        for line in selection.pdb:
             if "UNL" in line:
-                ss.resname = line.split()[-2]
+                ss.resname = line.split()[3]
                 break
             ss.resname = "UNL"
     except:
         try:
-            topology_format = "PDB"
+            topology_format = "MOL2"
             topo_tmp.write(
-                StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read()
+                StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
             )
-            st.success(f".pdb file found for {selection.name}!", icon="✔")
-            for line in selection.pdb:
+            st.success(f".mol2 file found for {selection.name}!", icon="✔")
+            for line in selection.mol2:
                 if "UNL" in line:
-                    ss.resname = line.split()[3]
+                    ss.resname = line.split()[-2]
                     break
                 ss.resname = "UNL"
         except:
