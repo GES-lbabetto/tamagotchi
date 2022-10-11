@@ -2,12 +2,12 @@
 # # # # # # # # # # # # # # # # # #     MD FOLLOWER      # # # # # # # # # # # # # # # # # #
 ############################################################################################
 
-import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import streamlit as st
+import mdreaders
 
 ss = st.session_state
 
@@ -20,30 +20,40 @@ selections = st.sidebar.multiselect(
 
 # Importing file readers
 
-from tamagotchi.mdreaders import read_dftb_out
-
 
 @st.cache
 def read_dftb_out(dftb_out):
-    df = read_dftb_out(dftb_out)
+    df = mdreaders.read_dftb_out(dftb_out)
     return df
-
-
-from tamagotchi.mdreaders import read_xyz_traj
 
 
 @st.cache
 def read_xyz_traj(xyz_traj):
-    df = read_xyz_traj(xyz_traj)
+    df = mdreaders.read_xyz_traj(xyz_traj)
     return df
-
-
-from tamagotchi.mdreaders import read_namd_out
 
 
 @st.cache
 def read_namd_out(namd_out):
-    df = read_namd_out(namd_out)
+    df = mdreaders.read_namd_out(namd_out)
+    return df
+
+
+def load_output(md):
+    try:
+        df = read_dftb_out(md.out)
+        st.success(f"DFTB output found for {md.name}!", icon="✔")
+    except:
+        try:
+            df = read_namd_out(md.namd)
+            st.success(f"NAMD output found for {md.name}!", icon="✔")
+        except:
+            try:
+                df = read_xyz_traj(md.xyz)
+                st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
+            except:
+                st.error(f"No trajectory file found for {md.name}!", icon="❌")
+                st.stop()
     return df
 
 
@@ -59,20 +69,7 @@ with energy_tab:
 
     for md in selections:
 
-        if md.out:
-
-            is_namd = False
-            with open(md.out) as f:
-                for line in f:
-                    if "Charm++" in line:
-                        is_namd = True
-
-            if is_namd:
-                df = read_namd_out(md.out)
-            else:
-                df = read_dftb_out(md.out)
-        elif md.xyz:
-            df = read_xyz_traj(md.xyz)
+        df = load_output(md)
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -249,21 +246,7 @@ with convergence_tab:
 
         for md in selections:
 
-            if md.out:
-
-                is_namd = False
-                with open(md.out) as f:
-                    for line in f:
-                        if "Charm++" in line:
-                            is_namd = True
-
-                if is_namd:
-                    df = read_namd_out(md.out)
-                else:
-                    df = read_dftb_out(md.out)
-
-            elif md.xyz:
-                df = read_xyz_traj(md.xyz)
+            df = load_output(md)
 
             fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -433,37 +416,23 @@ with density_tab:
 
     for md in selections:
 
-        if md.out:
-
-            is_namd = False
-            with open(md.out) as f:
-                for line in f:
-                    if "Charm++" in line:
-                        is_namd = True
-
-            if is_namd:
-                df = read_namd_out(md.out)
-            else:
-                df = read_dftb_out(md.out)
-
-        else:
-            st.warning(f"Sorry, no trajectory file available for {md.name}!")
-            continue
+        df = load_output(md)
 
         total_weight = 0.0
-        if md.mol2:
+        try:
             for line in md.mol2:
                 if len(line.split()) == 9:
                     total_weight += float(atom_weights[line.split()[1]])
             total_weight *= amu  # g
-        elif md.pdb:
-            for line in md.pdb:
-                if len(line.split()) == 11:
-                    total_weight += float(atom_weights[line.split()[2]])
-            total_weight *= amu  # g
-        else:
-            st.warning(f"Sorry, no topology file available for {md.name}!")
-            continue
+        except:
+            try:
+                for line in md.pdb:
+                    if len(line.split()) == 11:
+                        total_weight += float(atom_weights[line.split()[2]])
+                total_weight *= amu  # g
+            except:
+                st.warning(f"Sorry, no topology file available for {md.name}!")
+                continue
 
         dens_ps = st.slider(
             label="Calculate density at (ps):",

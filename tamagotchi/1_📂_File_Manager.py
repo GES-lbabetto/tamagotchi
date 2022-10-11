@@ -14,9 +14,16 @@ st.set_page_config(layout="wide")
 ss = st.session_state
 
 
-@dataclass
 class MD:
-    name: str
+    def __init__(self, name):
+        self.name = name
+
+    # def __getattr__(self, attr):
+    #     try:
+    #         return self.__getattribute__(attr)
+    #     except AttributeError:
+    #         st.warning(f"Attribute {attr} not found!")
+    #         return None
 
 
 @dataclass
@@ -74,7 +81,7 @@ with upload_tab:
     with st.form("File upload form", clear_on_submit=True):
         buffer = st.file_uploader(
             "Select the files to upload",
-            type=["xyz", "mol2", "pdb", "pbc", "out"],
+            type=["xyz", "mol2", "pdb", "pbc", "out", "namd", "dcd"],
             accept_multiple_files=True,
         )
         submitted = st.form_submit_button("📤 Submit")
@@ -118,7 +125,7 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs and os.path.splitext(
                     file_1.name
-                )[1] in [".xyz", ".out"]:
+                )[1] in [".xyz", ".out", ".namd"]:
 
                     basename_1 = (
                         os.path.splitext(os.path.basename(file_1.name))[0]

@@ -175,7 +175,7 @@ def read_namd_out(namd_out):
 
     for line in namd_out:
 
-        if "ENERGY:  " in line:
+        if "ENERGY:" in line:
             md_step_point = int(line.split()[1])
             volume_point = float(line.split()[18])  # A^3
             pressures_point = float(line.split()[16]) * 1e5  # Pa
@@ -210,8 +210,8 @@ def read_namd_out(namd_out):
             "Total MD Energy": total_md_energies,
             "MD Temperature": temperatures,
         },
-        index=md_steps,
-        # index=steps,
+        # index=md_steps,
+        index=steps,
     )
 
     return df

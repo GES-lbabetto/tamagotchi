@@ -2,6 +2,7 @@
 # # # # # # # # # # # # # # # # # #     MD ANALYZER      # # # # # # # # # # # # # # # # # #
 ############################################################################################
 
+import os
 import MDAnalysis as mda
 from MDAnalysis import transformations as trans
 from MDAnalysis.analysis.rdf import InterRDF
@@ -26,44 +27,65 @@ selection = st.sidebar.selectbox(
     "Select MD experiment", options, format_func=lambda x: x.name
 )
 
-if not selection.xyz:
-    st.warning(f"Sorry, no trajectory file available for {selection.name}!")
-    st.stop()
-if not selection.mol2 and selection.pdb:
-    st.warning(f"Sorry, no topology file available for {selection.name}!")
-    st.stop()
+with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as traj_tmp:
+    try:
+        traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
+    except:
+        try:
+            traj_tmp.write(
+                StringIO(selection.dcd.bytestream.getvalue().decode("utf-8")).read()
+            )
+        except:
+            st.error(f"No trajectory file found for {selection.name}!", icon="❌")
+            st.stop()
 
-with tmp(mode="w+") as topo_tmp, tmp(mode="w+") as xyz_tmp:
-    xyz_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
-
-    if selection.mol2:
-        topology_format = "MOL2"
-        topo_tmp.write(
-            StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
-        )
-        for line in selection.mol2:
-            if "UNL" in line:
-                ss.resname = line.split()[-2]
-                break
-            ss.resname = "UNL"
-
-    elif selection.pdb:
-        topology_format = "PDB"
-        topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
-        for line in selection.pdb:
+    try:
+        topology_format = "PSF"
+        topo_tmp.write(StringIO(selection.psf.bytestream.getvalue().decode("utf-8")).read())
+        st.success(f".psf file found for {selection.name}!", icon="✔")
+        for line in selection.psf:
             if "UNL" in line:
                 ss.resname = line.split()[3]
                 break
             ss.resname = "UNL"
-
-    ss.box_side = float(selection.pbc.bytestream.read())
+    except:
+        try:
+            topology_format = "MOL2"
+            topo_tmp.write(
+                StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
+            )
+            st.success(f".mol2 file found for {selection.name}!", icon="✔")
+            for line in selection.mol2:
+                if "UNL" in line:
+                    ss.resname = line.split()[-2]
+                    break
+                ss.resname = "UNL"
+        except:
+            try:
+                topology_format = "PDB"
+                topo_tmp.write(
+                    StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read()
+                )
+                st.success(f".pdb file found for {selection.name}!", icon="✔")
+                for line in selection.pdb:
+                    if "UNL" in line:
+                        ss.resname = line.split()[3]
+                        break
+                    ss.resname = "UNL"
+            except:
+                st.error(f"No topology files available for {selection.name}", icon="❌")
+                st.stop()
 
     def create_u():
 
-        u = mda.Universe(
-            topo_tmp.name, xyz_tmp.name, format="XYZ", topology_format=topology_format
-        )
-        u.dimensions = [ss.box_side, ss.box_side, ss.box_side, 90, 90, 90]
+        u = mda.Universe(topo_tmp.name, traj_tmp.name, topology_format=topology_format)
+        if not os.path.splitext(topo_tmp.name)[1] == ".psf":
+            try:
+                ss.box_side = float(selection.pbc.bytestream.read())
+                st.success(f".pbc file found for {selection.name}!", icon="✔")
+                u.dimensions = [ss.box_side, ss.box_side, ss.box_side, 90, 90, 90]
+            except:
+                st.warning(f".pbc file not found for {selection.name}!", icon="❗")
 
         return u
 
