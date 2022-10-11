@@ -30,11 +30,13 @@ selection = st.sidebar.selectbox(
 topo_tmp = tmp(mode="w+")
 try:
     if selection.xyz:
+        traj_format = "XYZ"
         traj_tmp = tmp(mode="w+")
         traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
 except:
     try:
         if selection.dcd:
+            traj_format = "DCD"
             traj_tmp = tmp(mode="wb+")
             traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
     except:
@@ -81,7 +83,9 @@ except:
 
 def create_u():
 
-    u = mda.Universe(topo_tmp.name, traj_tmp.name, topology_format=topology_format)
+    u = mda.Universe(
+        topo_tmp.name, traj_tmp.name, format=traj_format, topology_format=topology_format
+    )
     if not os.path.splitext(topo_tmp.name)[1] == ".psf":
         try:
             ss.box_side = float(selection.pbc.bytestream.read())
