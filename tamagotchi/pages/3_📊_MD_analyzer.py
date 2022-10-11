@@ -27,15 +27,15 @@ selection = st.sidebar.selectbox(
     "Select MD experiment", options, format_func=lambda x: x.name
 )
 
-topo_tmp = open(tmp(mode="w+"))
+topo_tmp = tmp(mode="w+")
 try:
     if selection.xyz:
-        traj_tmp = open(tmp(mode="w+"))
+        traj_tmp = tmp(mode="w+")
         traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
 except:
     try:
         if selection.dcd:
-            traj_tmp = open(tmp(mode="wb+"))
+            traj_tmp = tmp(mode="wb+")
             traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
     except:
         st.error(f"No trajectory file found for {selection.name}!", icon="❌")
