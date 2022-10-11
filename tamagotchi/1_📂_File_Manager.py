@@ -81,7 +81,7 @@ with upload_tab:
     with st.form("File upload form", clear_on_submit=True):
         buffer = st.file_uploader(
             "Select the files to upload",
-            type=["xyz", "mol2", "pdb", "pbc", "out", "namd", "dcd"],
+            type=["xyz", "mol2", "pdb", "psf", "pbc", "out", "namd", "dcd"],
             accept_multiple_files=True,
         )
         submitted = st.form_submit_button("📤 Submit")
@@ -95,6 +95,8 @@ with upload_tab:
     local_files += glob.glob("/scratch/lbabetto/**/*.mol2", recursive=True)
     local_files += glob.glob("/scratch/lbabetto/**/*.pdb", recursive=True)
     local_files += glob.glob("/scratch/lbabetto/**/*.pbc", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*.psf", recursive=True)
+    local_files += glob.glob("/scratch/lbabetto/**/*.dcd", recursive=True)
 
     for file in local_files:
         if file not in [file.name for file in ss.FileBuffer]:
@@ -125,7 +127,7 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs and os.path.splitext(
                     file_1.name
-                )[1] in [".xyz", ".out", ".namd"]:
+                )[1] in [".xyz", ".out", ".namd", "dcd"]:
 
                     basename_1 = (
                         os.path.splitext(os.path.basename(file_1.name))[0]
