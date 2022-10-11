@@ -127,7 +127,7 @@ with setup_tab:
             for file_1 in ss.FileBuffer:
                 if os.path.splitext(file_1.name)[0] not in ss.MDs and os.path.splitext(
                     file_1.name
-                )[1] in [".xyz", ".out", ".namd", "dcd"]:
+                )[1] in [".xyz", ".out", ".namd", ".dcd"]:
 
                     basename_1 = (
                         os.path.splitext(os.path.basename(file_1.name))[0]
