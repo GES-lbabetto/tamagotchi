@@ -79,7 +79,7 @@ with energy_tab:
 
         # fig.add_trace(
         #     go.Scatter(
-        #         x=df.index * md.timestep / 1000,
+        #         x=df.index * ( md.timestep / 1000 ),
         #         y=df["Total MD Energy"] * 23.06,
         #         name="Total MD Energy",
         #         line={
@@ -91,7 +91,7 @@ with energy_tab:
 
         fig.add_trace(
             go.Scatter(
-                x=df.index * md.timestep / 1000,  # ps
+                x=df.index * (md.timestep / 1000),  # ps
                 y=df["Total MD Energy"]
                 .rolling(window=int(10 / (md.timestep / 1000) / md.stride))
                 .mean()
@@ -132,16 +132,16 @@ with energy_tab:
         fig.add_trace(
             go.Scatter(
                 x=df.index[
-                    int(start / md.timestep / 1000 / md.stride) : int(
-                        stop / md.timestep / 1000 / md.stride
+                    int(start / (md.timestep / 1000) / md.stride) : int(
+                        stop / (md.timestep / 1000) / md.stride
                     ) :
                 ]
                 * md.timestep
                 / 1000,
                 y=df["Total MD Energy"]
                 .iloc()[
-                    int(start / md.timestep / 1000 / md.stride) : int(
-                        stop / md.timestep / 1000 / md.stride
+                    int(start / (md.timestep / 1000) / md.stride) : int(
+                        stop / (md.timestep / 1000) / md.stride
                     ) :
                 ]
                 .expanding()
@@ -158,8 +158,8 @@ with energy_tab:
         average = (
             df["Total MD Energy"]
             .iloc()[
-                int(start / md.timestep / 1000 / md.stride) : int(
-                    stop / md.timestep / 1000 / md.stride
+                int(start / (md.timestep / 1000) / md.stride) : int(
+                    stop / (md.timestep / 1000) / md.stride
                 ) :
             ]
             .mean()
@@ -167,14 +167,15 @@ with energy_tab:
         dataset_std = (
             df["Total MD Energy"]
             .iloc()[
-                int(start / md.timestep / 1000 / md.stride) : int(
-                    stop / md.timestep / 1000 / md.stride
+                int(start / (md.timestep / 1000) / md.stride) : int(
+                    stop / (md.timestep / 1000) / md.stride
                 ) :
             ]
             .std()
         )
         npoints = (
-            stop / md.timestep / 1000 / md.stride - start / md.timestep / 1000 / md.stride
+            stop / (md.timestep / 1000) / md.stride
+            - start / (md.timestep / 1000) / md.stride
         )
         average_error = dataset_std / np.sqrt((npoints))
         st.write(
@@ -186,8 +187,8 @@ with energy_tab:
         fig.add_trace(
             go.Scatter(
                 x=df.index[
-                    int(start / md.timestep / 1000 / md.stride) : int(
-                        stop / md.timestep / 1000 / md.stride
+                    int(start / (md.timestep / 1000) / md.stride) : int(
+                        stop / (md.timestep / 1000) / md.stride
                     )
                 ]
                 * md.timestep
@@ -205,22 +206,22 @@ with energy_tab:
         fig.update_yaxes(
             range=[
                 df["Total MD Energy"]
-                .rolling(window=int(10 / md.timestep / 1000 / md.stride))
+                .rolling(window=int(10 / (md.timestep / 1000) / md.stride))
                 .mean()
                 .iloc()[
-                    int(start / md.timestep / 1000 / md.stride) : int(
-                        stop / md.timestep / 1000 / md.stride
+                    int(start / (md.timestep / 1000) / md.stride) : int(
+                        stop / (md.timestep / 1000) / md.stride
                     ) :
                 ]
                 .min()
                 * 23.06
                 * (1 + 1e-5),
                 df["Total MD Energy"]
-                .rolling(window=int(10 / md.timestep / 1000 / md.stride))
+                .rolling(window=int(10 / (md.timestep / 1000) / md.stride))
                 .mean()
                 .iloc()[
-                    int(start / md.timestep / 1000 / md.stride) : int(
-                        stop / md.timestep / 1000 / md.stride
+                    int(start / (md.timestep / 1000) / md.stride) : int(
+                        stop / (md.timestep / 1000) / md.stride
                     ) :
                 ]
                 .max()
@@ -261,7 +262,7 @@ with convergence_tab:
 
             fig.add_trace(
                 go.Scatter(
-                    x=df.index * md.timestep / 1000,
+                    x=df.index * (md.timestep / 1000),
                     y=df["Total MD Energy"].expanding().mean() * 23.06,
                     name="Total MD Energy Average",
                 ),
@@ -275,7 +276,7 @@ with convergence_tab:
                 for step, x in enumerate(exp_av[::-1]):
                     dx = abs(exp_av[-1] - x) / abs(exp_av[-1]) * 1e6
                     if dx >= threshold_energy:
-                        t_valid.append(step * md.timestep / 1000 * md.stride)
+                        t_valid.append(step * (md.timestep / 1000) * md.stride)
                         break
 
             def moving_average(a, n=100):
@@ -285,7 +286,7 @@ with convergence_tab:
 
             fig.add_trace(
                 go.Scatter(
-                    x=df.index * md.timestep / 1000,
+                    x=df.index * (md.timestep / 1000),
                     y=t_valid,
                     name="T valid",
                 ),
@@ -301,19 +302,19 @@ with convergence_tab:
             if convergence_reached:
                 average = (
                     df["Total MD Energy"]
-                    .iloc()[: int(converged_step / md.timestep / 1000 / md.stride) :]
+                    .iloc()[: int(converged_step / (md.timestep / 1000) / md.stride) :]
                     .mean()
                 )
                 dataset_std = (
                     df["Total MD Energy"]
-                    .iloc()[: int(converged_step / md.timestep / 1000 / md.stride) :]
+                    .iloc()[: int(converged_step / (md.timestep / 1000) / md.stride) :]
                     .std()
                 )
-                npoints = converged_step / md.timestep / 1000 / md.stride
+                npoints = converged_step / (md.timestep / 1000) / md.stride
                 average_error = dataset_std / np.sqrt((npoints))
 
                 st.write(
-                    f"**Average Energy after {converged_step * md.timestep / 1000 * md.stride} ps:**\n"
+                    f"**Average Energy after {converged_step * ( md.timestep / 1000 ) * md.stride} ps:**\n"
                     f"* {average:.{len(f'{average_error:.2}')-2}f} ± {average_error:.2} eV\n"
                     f"* {average*23.06:.{len(f'{average_error*23.06:.2}')-2}f} ± {average_error*23.06:.2} kcal/mol"
                 )
@@ -349,17 +350,17 @@ with convergence_tab:
 
             # fig2_start, fig2_stop = st.slider(
             #     label="Calculate energy distribution from/to (ps):",
-            #     min_value=int(df.index[0] * md.timestep / 1000),
-            #     max_value=int(df.index[-1] * md.timestep / 1000),
-            #     value=(int(df.index[0] * md.timestep / 1000), int(df.index[-1] * md.timestep / 1000)),
+            #     min_value=int(df.index[0] * ( md.timestep / 1000 )),
+            #     max_value=int(df.index[-1] * ( md.timestep / 1000 )),
+            #     value=(int(df.index[0] * ( md.timestep / 1000 )), int(df.index[-1] * ( md.timestep / 1000 ))),
             #     key=f"{md.name}_dist",
             # )
 
             # fig2 = go.Figure(
             #     px.histogram(
             #         x=df["Total MD Energy"].iloc()[
-            #             int(fig2_start / md.timestep / 1000 / md.stride) : int(
-            #                 fig2_stop / md.timestep / 1000 / md.stride
+            #             int(fig2_start / ( md.timestep / 1000 ) / md.stride) : int(
+            #                 fig2_stop / ( md.timestep / 1000 ) / md.stride
             #             ) :
             #         ],
             #         nbins=int(fig2_bins),
@@ -441,15 +442,15 @@ with density_tab:
 
         dens_ps = st.slider(
             label="Calculate density at (ps):",
-            min_value=int(df.index[0] * md.timestep / 1000),
-            max_value=int(df.index[-1] * md.timestep / 1000),
-            value=int(int(df.index[-1] * md.timestep / 1000)),
+            min_value=int(df.index[0] * (md.timestep / 1000)),
+            max_value=int(df.index[-1] * (md.timestep / 1000)),
+            value=int(int(df.index[-1] * (md.timestep / 1000))),
             key=f"{md.name}_dens",
         )
 
         sel_dens = (
             total_weight
-            / df["Volume"].iloc()[int(dens_ps / md.timestep / 1000 / md.stride)]
+            / df["Volume"].iloc()[int(dens_ps / (md.timestep / 1000) / md.stride)]
             / 1e-27
         )
         st.write(f"Density after {dens_ps:.0f} ps: **{sel_dens:.2f}** g/L\n")
@@ -462,7 +463,7 @@ with density_tab:
 
         fig.add_trace(
             go.Scatter(
-                x=df.index * md.timestep / 1000,
+                x=df.index * (md.timestep / 1000),
                 y=df["Pressure"] / 101325,
                 name="Pressure",
                 line={
@@ -473,7 +474,7 @@ with density_tab:
         )
         fig.add_trace(
             go.Scatter(
-                x=df.index * md.timestep / 1000,
+                x=df.index * (md.timestep / 1000),
                 y=total_weight / (df["Volume"] * 1e-27),
                 name="Density",
                 line={
