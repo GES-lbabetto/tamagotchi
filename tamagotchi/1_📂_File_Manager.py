@@ -17,6 +17,8 @@ ss = st.session_state
 class MD:
     def __init__(self, name):
         self.name = name
+        self.timestep = 1  # fs
+        self.stride = 100  # steps
 
     # def __getattr__(self, attr):
     #     try:
@@ -72,9 +74,6 @@ upload_tab, setup_tab = st.tabs(
     ]
 )
 
-
-ss.timestep = float(st.sidebar.number_input("Timestep (fs): ", value=1.0)) / 1000
-ss.mdrestartfreq = int(st.sidebar.number_input("MD stride: ", value=100))
 
 with upload_tab:
 
@@ -160,7 +159,11 @@ with setup_tab:
         for md in ss.MDs:
             st.write(f"##### {ss.MDs[md].name}")
             for property in dir(ss.MDs[md]):
-                if not property.startswith("__") and property != "name":
+                if property == "timestep":
+                    st.write(f"* timestep: ``{getattr(ss.MDs[md], 'timestep')}`` fs")
+                elif property == "stride":
+                    st.write(f"* MD stride: ``{getattr(ss.MDs[md], 'stride')}`` steps")
+                elif not property.startswith("__") and property != "name":
                     st.write(f"* {property}: ``{getattr(ss.MDs[md], property).name}``")
             st.write("---")
 
@@ -170,8 +173,23 @@ with setup_tab:
         md_selections = st.multiselect(
             "Select MD simulations to edit:", ss.MDs, format_func=lambda x: ss.MDs[x].name
         )
+        st.write("---")
 
-        st.write("Append trajectory data:")
+        # st.write("Edit MD parameters:")
+        timestep = float(st.number_input("Timestep (fs): ", value=1.0))
+        stride = int(st.number_input("MD stride: ", value=100))
+
+        if st.button("📝 Edit simulation parameters"):
+            for selection in md_selections:
+                setattr(ss.MDs[selection], "timestep", timestep)
+                setattr(ss.MDs[selection], "stride", stride)
+
+                st.success(f"{selection} MD parameters updated!", icon="✅")
+                sleep(1)
+                st.experimental_rerun()
+
+        st.write("---")
+        # st.write("Append trajectory data:")
         append_file = st.selectbox(
             "Select trajectory file to append",
             [file for file in ss.FileBuffer if os.path.splitext(file.name)[1] == ".xyz"],
@@ -188,6 +206,8 @@ with setup_tab:
                 )
                 sleep(1)
                 st.experimental_rerun()
+
+        st.write("---")
 
         rename_string = st.text_input("Rename MD:")
         if st.button("📝 Rename MD"):
@@ -206,7 +226,8 @@ with setup_tab:
                 sleep(1)
             st.experimental_rerun()
 
-        st.write("Overwrite MD data:")
+        st.write("---")
+        # st.write("Overwrite MD data:")
 
         extensions = []
         for file in ss.FileBuffer:
