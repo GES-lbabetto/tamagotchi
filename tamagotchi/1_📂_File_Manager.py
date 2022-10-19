@@ -186,7 +186,7 @@ with setup_tab:
 
                 st.success(f"{selection} MD parameters updated!", icon="✅")
                 sleep(1)
-                st.experimental_rerun()
+            st.experimental_rerun()
 
         st.write("---")
         # st.write("Append trajectory data:")
@@ -205,7 +205,7 @@ with setup_tab:
                     f"{append_file.name} added to {ss.MDs[md_selections[0]].name}", icon="✅"
                 )
                 sleep(1)
-                st.experimental_rerun()
+            st.experimental_rerun()
 
         st.write("---")
 
