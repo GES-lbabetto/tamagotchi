@@ -47,7 +47,8 @@ def load_output(md):
         try:
             df = read_namd_out(md.namd)
             st.success(f"NAMD output found for {md.name}!", icon="✔")
-        except:
+        except Exception as e:
+            st.write(e)
             try:
                 df = read_xyz_traj(md.xyz)
                 st.success(f"XYZ trajectory found for {md.name}!", icon="✔")

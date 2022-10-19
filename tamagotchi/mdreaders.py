@@ -177,8 +177,12 @@ def read_namd_out(namd_out):
 
         if "ENERGY:" in line:
             md_step_point = int(line.split()[1])
-            volume_point = float(line.split()[18])  # A^3
-            pressures_point = float(line.split()[16]) * 1e5  # Pa
+            try:
+                volume_point = float(line.split()[18])  # A^3
+                pressures_point = float(line.split()[16]) * 1e5  # Pa
+            except:
+                volume_point = None
+                pressures_point = None
             # gibbs_free_energy_point = float(line.split()[5])  # eV
             # gibbs_free_energy_including_ke_point = float(line.split()[7])  # eV
             potential_energies_point = float(line.split()[13]) / 23.06  # eV
