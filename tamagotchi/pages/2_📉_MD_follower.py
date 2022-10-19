@@ -47,8 +47,7 @@ def load_output(md):
         try:
             df = read_namd_out(md.namd)
             st.success(f"NAMD output found for {md.name}!", icon="✔")
-        except Exception as e:
-            st.write(e)
+        except:
             try:
                 df = read_xyz_traj(md.xyz)
                 st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
@@ -78,17 +77,17 @@ with energy_tab:
 
         fig.update_layout(title=title)
 
-        # fig.add_trace(
-        #     go.Scatter(
-        #         x=df.index * ( md.timestep / 1000 ),
-        #         y=df["Total MD Energy"] * 23.06,
-        #         name="Total MD Energy",
-        #         line={
-        #             "width": 0.1,
-        #             "color": "blue",
-        #         },
-        #     ),
-        # )
+        fig.add_trace(
+            go.Scatter(
+                x=df.index * (md.timestep / 1000),
+                y=df["Total MD Energy"] * 23.06,
+                name="Total MD Energy",
+                line={
+                    "width": 0.1,
+                    "color": "blue",
+                },
+            ),
+        )
 
         fig.add_trace(
             go.Scatter(
