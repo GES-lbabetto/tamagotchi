@@ -20,13 +20,6 @@ class MD:
         self.timestep = 1  # fs
         self.stride = 100  # steps
 
-    # def __getattr__(self, attr):
-    #     try:
-    #         return self.__getattribute__(attr)
-    #     except AttributeError:
-    #         st.warning(f"Attribute {attr} not found!")
-    #         return None
-
 
 @dataclass
 class BytesStreamManager:
@@ -243,7 +236,7 @@ with setup_tab:
         )
         if st.button("💿 Overwrite MD data"):
             for md_selection in md_selections:
-                setattr(ss.MDs[md_selection], file_type, overwrite_file)
+                setattr(ss.MDs[md_selection], file_type[1:], overwrite_file)
                 st.success(
                     f"{md_selection} .{file_type} set to {overwrite_file.name}", icon="✅"
                 )

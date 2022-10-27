@@ -33,7 +33,7 @@ try:
         traj_format = "DCD"
         traj_tmp = tmp(mode="wb+")
         traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
-except:
+except AttributeError:
     try:
         if selection.xyz:
             traj_format = "XYZ"
@@ -41,7 +41,7 @@ except:
             traj_tmp.write(
                 StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read()
             )
-    except:
+    except AttributeError:
         st.error(f"No trajectory file found for {selection.name}!", icon="❌")
         st.stop()
 
@@ -54,7 +54,7 @@ try:
             ss.resname = line.split()[3]
             break
         ss.resname = "UNL"
-except:
+except AttributeError:
     try:
         topology_format = "PDB"
         topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
@@ -64,7 +64,7 @@ except:
                 ss.resname = line.split()[3]
                 break
             ss.resname = "UNL"
-    except:
+    except AttributeError:
         try:
             topology_format = "MOL2"
             topo_tmp.write(
@@ -76,7 +76,7 @@ except:
                     ss.resname = line.split()[-2]
                     break
                 ss.resname = "UNL"
-        except:
+        except AttributeError:
             st.error(f"No topology files available for {selection.name}", icon="❌")
             st.stop()
 

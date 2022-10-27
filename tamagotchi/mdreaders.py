@@ -13,11 +13,11 @@ Units are as follows:
 """
 
 
-def read_dftb_out(dftb_out):
+def read_dftb_out(md):
 
-    # step = 0
+    step = 0
 
-    # steps = []
+    steps = []
     md_steps = []
     volume = []
     pressures = []
@@ -39,7 +39,7 @@ def read_dftb_out(dftb_out):
     total_md_energy_point = None
     temperature_point = None
 
-    for line in dftb_out:
+    for line in md.out:
 
         if "MD step" in line:
             md_step_point = int(line.split()[2])
@@ -60,8 +60,8 @@ def read_dftb_out(dftb_out):
         if "MD Temperature:" in line:
             temperature_point = float(line.split()[4])  # K
 
-            # steps.append(step)
-            # step += ss.mdrestartfreq
+            steps.append(step)
+            step += md.stride
 
             md_steps.append(md_step_point)
             volume.append(volume_point)
@@ -84,47 +84,47 @@ def read_dftb_out(dftb_out):
             "Total MD Energy": total_md_energies,
             "MD Temperature": temperatures,
         },
-        index=md_steps,
-        # index=steps,
+        # index=md_steps,
+        index=steps,
     )
 
     return df
 
 
-def read_xyz_traj(xyz_traj):
+def read_xyz_traj(md):
 
-    # step = 0
+    step = 0
 
-    # steps = []
+    steps = []
     md_steps = []
-    volume = []
-    pressures = []
-    gibbs_free_energies = []
-    gibbs_free_energies_including_ke = []
+    # volume = []
+    # pressures = []
+    # gibbs_free_energies = []
+    # gibbs_free_energies_including_ke = []
 
-    potential_energies = []
-    kinetic_energies = []
+    # potential_energies = []
+    # kinetic_energies = []
     total_md_energies = []
-    temperatures = []
+    # temperatures = []
 
     md_step_point = None
-    volume_point = None
-    pressures_point = None
-    gibbs_free_energy_point = None
-    gibbs_free_energy_including_ke_point = None
-    potential_energies_point = None
-    kinetic_energies_point = None
+    # volume_point = None
+    # pressures_point = None
+    # gibbs_free_energy_point = None
+    # gibbs_free_energy_including_ke_point = None
+    # potential_energies_point = None
+    # kinetic_energies_point = None
     total_md_energy_point = None
-    temperature_point = None
+    # temperature_point = None
 
-    for line in xyz_traj:
+    for line in md.xyz:
 
         if "Step" in line:
             md_step_point = int(line.split()[1])
             total_md_energy_point = float(line.split()[3]) * 27.2114  # eV
 
-            # steps.append(step)
-            # step += ss.mdrestartfreq
+            steps.append(step)
+            step += md.stride
 
             md_steps.append(md_step_point)
             total_md_energies.append(total_md_energy_point)
@@ -140,23 +140,23 @@ def read_xyz_traj(xyz_traj):
             "Total MD Energy": total_md_energies,
             # "MD Temperature": temperatures,
         },
-        index=md_steps,
-        # index=steps,
+        # index=md_steps,
+        index=steps,
     )
 
     return df
 
 
-def read_namd_out(namd_out):
+def read_namd_out(md):
 
-    # step = 0
+    step = 0
 
-    # steps = []
+    steps = []
     md_steps = []
     volume = []
     pressures = []
-    gibbs_free_energies = []
-    gibbs_free_energies_including_ke = []
+    # gibbs_free_energies = []
+    # gibbs_free_energies_including_ke = []
 
     potential_energies = []
     kinetic_energies = []
@@ -166,14 +166,14 @@ def read_namd_out(namd_out):
     md_step_point = None
     volume_point = None
     pressures_point = None
-    gibbs_free_energy_point = None
-    gibbs_free_energy_including_ke_point = None
+    # gibbs_free_energy_point = None
+    # gibbs_free_energy_including_ke_point = None
     potential_energies_point = None
     kinetic_energies_point = None
     total_md_energy_point = None
     temperature_point = None
 
-    for line in namd_out:
+    for line in md.namd:
 
         if "ENERGY:" in line:
             md_step_point = int(line.split()[1])
@@ -190,8 +190,8 @@ def read_namd_out(namd_out):
             total_md_energy_point = float(line.split()[11]) / 23.06  # eV
             temperature_point = float(line.split()[12]) / 23.06  # K
 
-            # steps.append(step)
-            # step += ss.mdrestartfreq
+            steps.append(step)
+            step += ss.mdrestartfreq
 
             md_steps.append(md_step_point)
             volume.append(volume_point)
@@ -214,8 +214,8 @@ def read_namd_out(namd_out):
             "Total MD Energy": total_md_energies,
             "MD Temperature": temperatures,
         },
-        index=md_steps,
-        # index=steps,
+        # index=md_steps,
+        index=steps,
     )
 
     return df
