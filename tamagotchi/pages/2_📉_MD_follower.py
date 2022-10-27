@@ -44,16 +44,18 @@ def load_output(md):
         df = read_dftb_out(md)
         st.success(f"DFTB output found for {md.name}!", icon="✔")
     except AttributeError:
-        try:
-            df = read_namd_out(md)
-            st.success(f"NAMD output found for {md.name}!", icon="✔")
-        except AttributeError:
-            try:
-                df = read_xyz_traj(md)
-                st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
-            except AttributeError:
-                st.error(f"No trajectory file found for {md.name}!", icon="❌")
-                st.stop()
+        pass
+    try:
+        df = read_namd_out(md)
+        st.success(f"NAMD output found for {md.name}!", icon="✔")
+    except AttributeError:
+        pass
+    try:
+        df = read_xyz_traj(md)
+        st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
+    except AttributeError:
+        st.error(f"No trajectory file found for {md.name}!", icon="❌")
+        st.stop()
     return df
 
 

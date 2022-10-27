@@ -34,16 +34,15 @@ try:
         traj_tmp = tmp(mode="wb+")
         traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
 except AttributeError:
-    try:
-        if selection.xyz:
-            traj_format = "XYZ"
-            traj_tmp = tmp(mode="w+")
-            traj_tmp.write(
-                StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read()
-            )
-    except AttributeError:
-        st.error(f"No trajectory file found for {selection.name}!", icon="❌")
-        st.stop()
+    pass
+try:
+    if selection.xyz:
+        traj_format = "XYZ"
+        traj_tmp = tmp(mode="w+")
+        traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
+except AttributeError:
+    st.error(f"No trajectory file found for {selection.name}!", icon="❌")
+    st.stop()
 
 try:
     topology_format = "PSF"
@@ -55,30 +54,30 @@ try:
             break
         ss.resname = "UNL"
 except AttributeError:
-    try:
-        topology_format = "PDB"
-        topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
-        st.success(f".pdb file found for {selection.name}!", icon="✔")
-        for line in selection.pdb:
-            if "UNL" in line:
-                ss.resname = line.split()[3]
-                break
-            ss.resname = "UNL"
-    except AttributeError:
-        try:
-            topology_format = "MOL2"
-            topo_tmp.write(
-                StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
-            )
-            st.success(f".mol2 file found for {selection.name}!", icon="✔")
-            for line in selection.mol2:
-                if "UNL" in line:
-                    ss.resname = line.split()[-2]
-                    break
-                ss.resname = "UNL"
-        except AttributeError:
-            st.error(f"No topology files available for {selection.name}", icon="❌")
-            st.stop()
+    pass
+try:
+    topology_format = "PDB"
+    topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
+    st.success(f".pdb file found for {selection.name}!", icon="✔")
+    for line in selection.pdb:
+        if "UNL" in line:
+            ss.resname = line.split()[3]
+            break
+        ss.resname = "UNL"
+except AttributeError:
+    pass
+try:
+    topology_format = "MOL2"
+    topo_tmp.write(StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read())
+    st.success(f".mol2 file found for {selection.name}!", icon="✔")
+    for line in selection.mol2:
+        if "UNL" in line:
+            ss.resname = line.split()[-2]
+            break
+        ss.resname = "UNL"
+except AttributeError:
+    st.error(f"No topology files available for {selection.name}", icon="❌")
+    st.stop()
 
 
 def create_u():
