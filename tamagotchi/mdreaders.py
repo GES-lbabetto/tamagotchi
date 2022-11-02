@@ -191,7 +191,7 @@ def read_namd_out(md):
             temperature_point = float(line.split()[12]) / 23.06  # K
 
             steps.append(step)
-            step += ss.mdrestartfreq
+            step += md.stride
 
             md_steps.append(md_step_point)
             volume.append(volume_point)

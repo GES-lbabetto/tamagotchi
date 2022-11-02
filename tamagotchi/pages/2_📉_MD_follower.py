@@ -21,19 +21,19 @@ selections = st.sidebar.multiselect(
 # Importing file readers
 
 
-@st.cache
+# @st.cache
 def read_dftb_out(dftb_out):
     df = mdreaders.read_dftb_out(dftb_out)
     return df
 
 
-@st.cache
+# @st.cache
 def read_xyz_traj(xyz_traj):
     df = mdreaders.read_xyz_traj(xyz_traj)
     return df
 
 
-@st.cache
+# @st.cache
 def read_namd_out(namd_out):
     df = mdreaders.read_namd_out(namd_out)
     return df
@@ -43,18 +43,25 @@ def load_output(md):
     try:
         df = read_dftb_out(md)
         st.success(f"DFTB output found for {md.name}!", icon="✔")
-    except AttributeError:
-        try:
-            df = read_namd_out(md)
-            st.success(f"NAMD output found for {md.name}!", icon="✔")
-        except AttributeError:
-            try:
-                df = read_xyz_traj(md)
-                st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
-            except AttributeError:
-                st.error(f"No trajectory file found for {md.name}!", icon="❌")
-                st.stop()
-    return df
+        return df
+    except Exception as e:
+        # st.write(e)
+        pass
+    try:
+        df = read_namd_out(md)
+        st.success(f"NAMD output found for {md.name}!", icon="✔")
+        return df
+    except Exception as e:
+        # st.write(e)
+        pass
+    try:
+        df = read_xyz_traj(md)
+        st.success(f"XYZ trajectory found for {md.name}!", icon="✔")
+        return df
+    except Exception as e:
+        # st.write(e)
+        st.error(f"No trajectory file found for {md.name}!", icon="❌")
+        st.stop()
 
 
 energy_tab, convergence_tab, density_tab = st.tabs(

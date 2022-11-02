@@ -34,13 +34,17 @@ try:
         traj_format = "DCD"
         traj_tmp = tmp(mode="wb+")
         traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
-except AttributeError:
+except Exception as e:
+    # st.write(e)
     try:
         if selection.xyz:
             traj_format = "XYZ"
             traj_tmp = tmp(mode="w+")
-            traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
-    except AttributeError:
+            traj_tmp.write(
+                StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read()
+            )
+    except Exception as e:
+        # st.write(e)
         st.error(f"No trajectory file found for {selection.name}!", icon="❌")
         st.stop()
 
@@ -53,7 +57,8 @@ try:
             ss.resname = line.split()[3]
             break
         ss.resname = "UNL"
-except AttributeError:
+except Exception as e:
+    # st.write(e)
     try:
         topology_format = "PDB"
         topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
@@ -63,17 +68,21 @@ except AttributeError:
                 ss.resname = line.split()[3]
                 break
             ss.resname = "UNL"
-    except AttributeError:
+    except Exception as e:
+        # st.write(e)
         try:
             topology_format = "MOL2"
-            topo_tmp.write(StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read())
+            topo_tmp.write(
+                StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read()
+            )
             st.success(f".mol2 file found for {selection.name}!", icon="✔")
             for line in selection.mol2:
                 if "UNL" in line:
                     ss.resname = line.split()[-2]
                     break
                 ss.resname = "UNL"
-        except AttributeError:
+        except Exception as e:
+            # st.write(e)
             st.error(f"No topology files available for {selection.name}", icon="❌")
             st.stop()
 
@@ -406,16 +415,13 @@ with tab5:
 
     st.plotly_chart(ss.fig_solvrdf, use_container_width=True)
 
-topo_tmp.close()
-traj_tmp.close()
-
 
 with tab6:
 
     # 2-dimensional RDF (vs time)
 
-    atom1 = st.text_input("Select atom type 1: ", value="O")
-    atom2 = st.text_input("Select atom type 2: ", value="O")
+    atom1 = st.text_input("Select atom type 1 : ", value="O")
+    atom2 = st.text_input("Select atom type 2 : ", value="O")
 
     u = create_u()
 
@@ -435,21 +441,61 @@ with tab6:
         exclusion_block=(1, 1),
     )
 
-    if "fig_2Drdf" not in ss:
-        ss["fig_2Drdf"] = None
-    if st.button(f"🔃 Calculate {atom1}-{atom2} 2D RDF"):
-        ss["rdf_2D"] = rdf_2D.run(step=1)
-        rdf2D_2D = ss["rdf_2D"]
+    stride = st.sidebar.number_input(
+        "Stride (frames): ",
+        min_value=1,
+        max_value=len(u.trajectory),
+        value=50,
+    )
+    zmin = st.sidebar.number_input(
+        "z min: ", min_value=0.0, max_value=10.0, value=0.5, step=0.1
+    )
+    zmax = st.sidebar.number_input(
+        "z max: ", min_value=0.0, max_value=10.0, value=1.5, step=0.1
+    )
 
-        ss.fig_rdf2D.add_trace(
-            go.Scatter(
-                x=rdf_atom.results.bins,
-                y=rdf_atom.results.rdf,
+    if "fig_2Drdf" not in ss:
+        ss.fig_2Drdf = None
+    if st.button(f"🔃 Calculate {atom1}-{atom2} 2D RDF"):
+        ss.fig_2Drdf = go.Figure()
+
+        step = 0
+        progress = st.progress(0)
+        rdf_2D_surface = []
+        times = []
+
+        for i in range(len(u.trajectory) // stride):
+
+            rdf_2D.run(start=step, stop=step + stride, step=1)
+
+            rdf_2D_surface.append(rdf_2D.results.rdf)
+            times.append(step)
+            step += stride
+
+            progress.progress((i + 1) / (len(u.trajectory) // stride))
+
+        ss.fig_2Drdf.add_trace(
+            go.Contour(
+                x=rdf_2D.results.bins,
+                z=rdf_2D_surface,
+                y=times,
+                zmin=zmin,
+                zmax=zmax,
                 name=selection.name,
+                contours_coloring="heatmap",
+                line_width=0,
             ),
         )
 
-        ss.fig_rdf2D.update_xaxes(title_text="r (Å)")
-        ss.fig_rdf2D.update_yaxes(title_text=f"g(r) {atom1}-{atom2}")
+        ss.fig_2Drdf.update_layout(
+            scene={
+                "xaxis_title": "r (Å)",
+                "yaxis_title": "frame",
+                "zaxis_title": f"g(r) {atom1}-{atom2}",
+            }
+        )
 
-    st.plotly_chart(ss.fig_rdf2D, use_container_width=True)
+        st.plotly_chart(ss.fig_2Drdf, use_container_width=True)
+
+topo_tmp.close()
+traj_tmp.close()
