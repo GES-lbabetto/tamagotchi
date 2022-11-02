@@ -441,18 +441,14 @@ with tab6:
         exclusion_block=(1, 1),
     )
 
-    stride = st.sidebar.number_input(
+    stride = st.number_input(
         "Stride (frames): ",
         min_value=1,
         max_value=len(u.trajectory),
         value=50,
     )
-    zmin = st.sidebar.number_input(
-        "z min: ", min_value=0.0, max_value=10.0, value=0.5, step=0.1
-    )
-    zmax = st.sidebar.number_input(
-        "z max: ", min_value=0.0, max_value=10.0, value=1.5, step=0.1
-    )
+    zmin = st.number_input("z min: ", min_value=0.0, max_value=10.0, value=0.5, step=0.1)
+    zmax = st.number_input("z max: ", min_value=0.0, max_value=10.0, value=1.5, step=0.1)
 
     if "fig_2Drdf" not in ss:
         ss.fig_2Drdf = None
@@ -483,17 +479,13 @@ with tab6:
                 zmax=zmax,
                 name=selection.name,
                 contours_coloring="heatmap",
+                colorbar=dict(title=f"g(r) {atom1}-{atom2}"),
                 line_width=0,
             ),
         )
 
-        ss.fig_2Drdf.update_layout(
-            scene={
-                "xaxis_title": "r (Å)",
-                "yaxis_title": "frame",
-                "zaxis_title": f"g(r) {atom1}-{atom2}",
-            }
-        )
+        ss.fig_2Drdf.update_xaxes(title_text="r (Å)")
+        ss.fig_2Drdf.update_yaxes(title_text="frame #")
 
         st.plotly_chart(ss.fig_2Drdf, use_container_width=True)
 
