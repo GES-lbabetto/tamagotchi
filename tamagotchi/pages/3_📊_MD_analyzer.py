@@ -28,21 +28,21 @@ selection = st.sidebar.selectbox(
 )
 
 topo_tmp = tmp(mode="w+")
+
 try:
     if selection.dcd:
         traj_format = "DCD"
         traj_tmp = tmp(mode="wb+")
         traj_tmp.write(BytesIO(selection.dcd.bytestream.getvalue()).read())
 except AttributeError:
-    pass
-try:
-    if selection.xyz:
-        traj_format = "XYZ"
-        traj_tmp = tmp(mode="w+")
-        traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
-except AttributeError:
-    st.error(f"No trajectory file found for {selection.name}!", icon="❌")
-    st.stop()
+    try:
+        if selection.xyz:
+            traj_format = "XYZ"
+            traj_tmp = tmp(mode="w+")
+            traj_tmp.write(StringIO(selection.xyz.bytestream.getvalue().decode("utf-8")).read())
+    except AttributeError:
+        st.error(f"No trajectory file found for {selection.name}!", icon="❌")
+        st.stop()
 
 try:
     topology_format = "PSF"
@@ -54,30 +54,28 @@ try:
             break
         ss.resname = "UNL"
 except AttributeError:
-    pass
-try:
-    topology_format = "PDB"
-    topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
-    st.success(f".pdb file found for {selection.name}!", icon="✔")
-    for line in selection.pdb:
-        if "UNL" in line:
-            ss.resname = line.split()[3]
-            break
-        ss.resname = "UNL"
-except AttributeError:
-    pass
-try:
-    topology_format = "MOL2"
-    topo_tmp.write(StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read())
-    st.success(f".mol2 file found for {selection.name}!", icon="✔")
-    for line in selection.mol2:
-        if "UNL" in line:
-            ss.resname = line.split()[-2]
-            break
-        ss.resname = "UNL"
-except AttributeError:
-    st.error(f"No topology files available for {selection.name}", icon="❌")
-    st.stop()
+    try:
+        topology_format = "PDB"
+        topo_tmp.write(StringIO(selection.pdb.bytestream.getvalue().decode("utf-8")).read())
+        st.success(f".pdb file found for {selection.name}!", icon="✔")
+        for line in selection.pdb:
+            if "UNL" in line:
+                ss.resname = line.split()[3]
+                break
+            ss.resname = "UNL"
+    except AttributeError:
+        try:
+            topology_format = "MOL2"
+            topo_tmp.write(StringIO(selection.mol2.bytestream.getvalue().decode("utf-8")).read())
+            st.success(f".mol2 file found for {selection.name}!", icon="✔")
+            for line in selection.mol2:
+                if "UNL" in line:
+                    ss.resname = line.split()[-2]
+                    break
+                ss.resname = "UNL"
+        except AttributeError:
+            st.error(f"No topology files available for {selection.name}", icon="❌")
+            st.stop()
 
 
 def create_u():
@@ -97,13 +95,14 @@ def create_u():
     return u
 
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     [
-        "💫 Atom-Atom RDF",
-        "🌊 Linear Density",
-        "🏃‍♀️ Self-Diffusivity",
-        "⚡ Dielectric Constant",
-        "💠 Solute-solvent RDF",
+        "💫 Atom-Atom RDF",  # 1
+        "🌊 Linear Density",  # 2
+        "🏃‍♀️ Self-Diffusivity",  # 3
+        "⚡ Dielectric Constant",  # 4
+        "💠 Solute-solvent RDF",  # 5
+        "📈 2D RDF",  # 6
     ]
 )
 
@@ -409,3 +408,48 @@ with tab5:
 
 topo_tmp.close()
 traj_tmp.close()
+
+
+with tab6:
+
+    # 2-dimensional RDF (vs time)
+
+    atom1 = st.text_input("Select atom type 1: ", value="O")
+    atom2 = st.text_input("Select atom type 2: ", value="O")
+
+    u = create_u()
+
+    solvent = u.select_atoms(f"not resname {ss.resname}")
+
+    workflow = [
+        trans.unwrap(u.atoms),
+        trans.wrap(u.atoms, compound="residues"),
+    ]
+    u.trajectory.add_transformations(*workflow)
+
+    rdf_2D = InterRDF(
+        u.select_atoms(f"name {atom1}"),
+        u.select_atoms(f"name {atom2}"),
+        nbins=500,
+        range=([0.0, ss.box_side / 2]),
+        exclusion_block=(1, 1),
+    )
+
+    if "fig_2Drdf" not in ss:
+        ss["fig_2Drdf"] = None
+    if st.button(f"🔃 Calculate {atom1}-{atom2} 2D RDF"):
+        ss["rdf_2D"] = rdf_2D.run(step=1)
+        rdf2D_2D = ss["rdf_2D"]
+
+        ss.fig_rdf2D.add_trace(
+            go.Scatter(
+                x=rdf_atom.results.bins,
+                y=rdf_atom.results.rdf,
+                name=selection.name,
+            ),
+        )
+
+        ss.fig_rdf2D.update_xaxes(title_text="r (Å)")
+        ss.fig_rdf2D.update_yaxes(title_text=f"g(r) {atom1}-{atom2}")
+
+    st.plotly_chart(ss.fig_rdf2D, use_container_width=True)
