@@ -455,12 +455,20 @@ with density_tab:
             key=f"{md.name}_dens",
         )
 
-        sel_dens = (
-            total_weight
-            / df["Volume"].iloc()[int(dens_ps / (md.timestep / 1000) / md.stride)]
-            / 1e-27
-        )
-        st.write(f"Density after {dens_ps:.0f} ps: **{sel_dens:.2f}** g/L\n")
+        try:
+            sel_dens = (
+                total_weight
+                / df["Volume"].iloc()[int(dens_ps / (md.timestep / 1000) / md.stride)]
+                / 1e-27
+            )
+            st.write(f"Density after {dens_ps:.0f} ps: **{sel_dens:.2f}** g/L\n")
+
+        except:
+            st.warning(
+                "No volume data found in output. Perhaps this was a NVT simulation?",
+                icon="⚠",
+            )
+            st.stop()
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
