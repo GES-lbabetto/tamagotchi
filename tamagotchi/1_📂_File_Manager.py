@@ -182,18 +182,25 @@ with setup_tab:
             st.experimental_rerun()
 
         st.write("---")
-        # st.write("Append trajectory data:")
+
         append_file = st.selectbox(
             "Select trajectory file to append",
-            [file for file in ss.FileBuffer if os.path.splitext(file.name)[1] == ".xyz"],
+            [
+                file
+                for file in ss.FileBuffer
+                if os.path.splitext(file.name)[1] in [".xyz", ".namd"]
+            ],
             format_func=lambda x: x.name,
         )
 
+        # Appending trajectories
         if st.button("🔗 Add trajectory file"):
             if len(md_selections) > 1:
                 st.error("You should append trajectory files to only one file at a time!")
             else:
-                ss.MDs[md_selections[0]].xyz += append_file
+                new_traj = getattr(ss.MDs[md], os.path.splitext(append_file.name)[1][1:])
+                new_traj += append_file
+                setattr(ss.MDs[md], os.path.splitext(append_file.name)[1][1:], new_traj)
                 st.success(
                     f"{append_file.name} added to {ss.MDs[md_selections[0]].name}", icon="✅"
                 )
@@ -202,6 +209,7 @@ with setup_tab:
 
         st.write("---")
 
+        # Renaming MDs
         rename_string = st.text_input("Rename MD:")
         if st.button("📝 Rename MD"):
             for md_selection in md_selections:
@@ -220,8 +228,8 @@ with setup_tab:
             st.experimental_rerun()
 
         st.write("---")
-        # st.write("Overwrite MD data:")
 
+        # Removing MDs
         extensions = []
         for file in ss.FileBuffer:
             ext = os.path.splitext(file.name)[1]
