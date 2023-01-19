@@ -198,9 +198,9 @@ with setup_tab:
             if len(md_selections) > 1:
                 st.error("You should append trajectory files to only one file at a time!")
             else:
-                new_traj = getattr(ss.MDs[md], os.path.splitext(append_file.name)[1][1:])
+                new_traj = getattr(ss.MDs[md_selections[0]], os.path.splitext(append_file.name)[1][1:])
                 new_traj += append_file
-                setattr(ss.MDs[md], os.path.splitext(append_file.name)[1][1:], new_traj)
+                setattr(ss.MDs[md_selections[0]], os.path.splitext(append_file.name)[1][1:], new_traj)               
                 st.success(
                     f"{append_file.name} added to {ss.MDs[md_selections[0]].name}", icon="✅"
                 )
